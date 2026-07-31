@@ -1,32 +1,15 @@
-import {
-  deleteObject,
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytes,
-  type FirebaseStorage,
-} from 'firebase/storage';
+import { isMockModeEnabled } from '@/config/mock-mode';
+import * as mockStorage from '@/mocks/firebase/storage.mock';
 
-import { getFirebaseApp } from './config';
+import * as realStorage from './storage.real';
 
-let storageInstance: FirebaseStorage | undefined;
+/**
+ * Escolhe a implementação real ou mockada uma única vez, no carregamento do módulo (ver
+ * src/firebase/auth.ts para a mesma ideia, com mais comentários). Para voltar a usar sempre o
+ * Firebase real, apague este arquivo e renomeie storage.real.ts de volta para storage.ts.
+ */
+const impl = isMockModeEnabled ? mockStorage : realStorage;
 
-function getStorageInstance(): FirebaseStorage {
-  if (!storageInstance) {
-    storageInstance = getStorage(getFirebaseApp());
-  }
-  return storageInstance;
-}
-
-export async function uploadFile(path: string, blob: Blob): Promise<string> {
-  await uploadBytes(ref(getStorageInstance(), path), blob);
-  return path;
-}
-
-export async function getFileUrl(path: string): Promise<string> {
-  return getDownloadURL(ref(getStorageInstance(), path));
-}
-
-export async function deleteFile(path: string): Promise<void> {
-  await deleteObject(ref(getStorageInstance(), path));
-}
+export const uploadFile = impl.uploadFile;
+export const getFileUrl = impl.getFileUrl;
+export const deleteFile = impl.deleteFile;

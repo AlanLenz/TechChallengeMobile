@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { isEnvValid } from '@/config/env';
+import { isMockModeEnabled } from '@/config/mock-mode';
 import {
   reloadCurrentUser,
   signIn as firebaseSignIn,
@@ -20,14 +21,17 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Sem credenciais reais e sem modo mock ativo: não há sessão para restaurar — parte direto como
+// não autenticado em vez de deixar o app travado em "loading" para sempre. Com mocks ativos (ver
+// src/config/mock-mode.ts) o fluxo de auth funciona normalmente, só que em memória.
+const authAvailable = isEnvValid || isMockModeEnabled;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  // Sem credenciais reais ainda (.env não preenchido): não há sessão para restaurar — parte
-  // direto como não autenticado em vez de deixar o app travado em "loading" para sempre.
-  const [status, setStatus] = useState<AuthStatus>(isEnvValid ? 'loading' : 'unauthenticated');
+  const [status, setStatus] = useState<AuthStatus>(authAvailable ? 'loading' : 'unauthenticated');
 
   useEffect(() => {
-    if (!isEnvValid) return;
+    if (!authAvailable) return;
 
     const unsubscribe = subscribeToAuthChanges((nextUser) => {
       setUser(nextUser);

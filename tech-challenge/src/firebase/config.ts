@@ -1,13 +1,17 @@
-import { type FirebaseApp, getApps, initializeApp } from 'firebase/app';
+import {
+  type FirebaseApp,
+  getApp,
+  getApps,
+  initializeApp,
+} from 'firebase/app';
 
 import { env, isEnvValid } from '@/config/env';
 
 let app: FirebaseApp | undefined;
 
 /**
- * Inicialização lazy: importar este módulo nunca lança erro (o app precisa subir mesmo sem
- * credenciais reais ainda). O erro só acontece quando algo em src/firebase/* é efetivamente
- * chamado sem as variáveis EXPO_PUBLIC_FIREBASE_* configuradas.
+ * Inicialização lazy: importar este módulo nunca lança erro.
+ * O Firebase só é inicializado quando alguma operação realmente precisa dele.
  */
 export function getFirebaseApp(): FirebaseApp {
   if (!isEnvValid) {
@@ -17,8 +21,8 @@ export function getFirebaseApp(): FirebaseApp {
   }
 
   if (!app) {
-    app = getApps().length
-      ? getApps()[0]
+    app = getApps().length > 0
+      ? getApp()
       : initializeApp({
           apiKey: env.EXPO_PUBLIC_FIREBASE_API_KEY,
           authDomain: env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,

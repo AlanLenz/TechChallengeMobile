@@ -1,28 +1,24 @@
-import { queryCollection, setDocument } from '@/firebase/firestore';
+import { COLLECTIONS } from '@/constants/api';
+import { addDocument, queryCollection } from '@/firebase/firestore';
 
-import type { Transfer } from '../types';
-import type { CreateTransferFormValues } from '../validations';
+import type { CategoryId, Transfer } from '../types';
+import type { TransferFormValues } from '../validations';
 
-export async function getTransfers(userId: string): Promise<Transfer[]> {
-  return queryCollection<Transfer>(
-    `users/${userId}/transactions`
-  );
+function transfersPath(userId: string): string {
+  return `users/${userId}/${COLLECTIONS.TRANSFERS}`;
 }
 
-export async function createTransfer(
-  userId: string,
-  input: CreateTransferFormValues
-): Promise<void> {
-  const id = `${userId}-${Date.now()}`;
+export async function getTransfers(userId: string): Promise<Transfer[]> {
+  return queryCollection<Transfer>(transfersPath(userId));
+}
 
-  await setDocument(
-    `users/${userId}/transactions`,
-    id,
-    {
-      fromAccountId: input.fromAccountId,
-      toAccountId: input.toAccountId,
-      amount: Number(input.amount.replace(',', '.')),
-      createdAt: Date.now(),
-    }
-  );
+export async function createTransfer(userId: string, input: TransferFormValues): Promise<string> {
+  return addDocument(transfersPath(userId), {
+    description: input.description,
+    amount: Number(input.amount.replace(',', '.')),
+    date: input.date,
+    type: input.type,
+    categories_id: input.categoriesId as CategoryId,
+    ...(input.receiptUrl ? { receipt_url: input.receiptUrl } : {}),
+  });
 }

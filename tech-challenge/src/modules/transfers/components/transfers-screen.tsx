@@ -6,18 +6,13 @@ import { Loading } from '@/components/feedback/loading';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/constants/routes';
 import { TabScreenLayout } from '@/layouts/tab-screen-layout';
-import { useAccounts } from '@/modules/accounts';
 
 import { useTransfers } from '../hooks/use-transfers';
 import { TransferListItem } from './transfer-list-item';
 
 export function TransfersScreen() {
   const router = useRouter();
-  const { data: accounts, isLoading: isLoadingAccounts } = useAccounts();
-  const primaryAccountId = accounts?.[0]?.id;
-  const { data: transfers, isLoading: isLoadingTransfers } = useTransfers(primaryAccountId);
-
-  const isLoading = isLoadingAccounts || (Boolean(primaryAccountId) && isLoadingTransfers);
+  const { data: transfers, isLoading } = useTransfers();
 
   return (
     <TabScreenLayout
@@ -31,12 +26,6 @@ export function TransfersScreen() {
       }>
       {isLoading ? (
         <Loading />
-      ) : !primaryAccountId ? (
-        <EmptyState
-          icon="swap-horizontal-outline"
-          title="Nenhuma conta disponível"
-          description="Cadastre uma conta para começar a transferir."
-        />
       ) : (
         <FlatList
           data={transfers ?? []}

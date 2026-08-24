@@ -6,7 +6,6 @@ export const ROUTES = {
   },
   TABS: {
     HOME: '/(tabs)',
-    ACCOUNTS: '/(tabs)/accounts',
     TRANSFERS: '/(tabs)/transfers',
     PROFILE: '/(tabs)/profile',
   },

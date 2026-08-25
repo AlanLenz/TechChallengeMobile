@@ -2,5 +2,5 @@
 export const COLLECTIONS = {
   USERS: 'users',
   ACCOUNTS: 'accounts',
-  TRANSFERS: 'transfers',
+  TRANSFERS: 'transactions',
 } as const;

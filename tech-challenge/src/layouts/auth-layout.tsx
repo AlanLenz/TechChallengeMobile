@@ -12,7 +12,7 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <ScreenContainer className="justify-center gap-8">
+    <ScreenContainer className="justify-center gap-8 px-screen-x">
       <View className="gap-2">
         <Typography variant="display">{title}</Typography>
         {subtitle ? <Typography variant="small">{subtitle}</Typography> : null}

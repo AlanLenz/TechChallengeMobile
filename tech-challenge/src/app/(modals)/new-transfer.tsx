@@ -10,7 +10,7 @@ export default function NewTransfer() {
 
   return (
     <ScreenContainer edges={['top']} className="gap-6 px-0">
-      <Header title="Nova transferência" onBack={() => router.back()} />
+      <Header title="Nova Transação" onBack={() => router.back()} />
       <View className="px-screen-x">
         <TransferForm />
       </View>

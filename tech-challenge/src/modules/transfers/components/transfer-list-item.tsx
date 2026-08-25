@@ -17,6 +17,8 @@ export function TransferListItem({ transfer, onPress }: TransferListItemProps) {
     CATEGORIES.find((c) => c.value === transfer.categories_id)?.label ?? '—';
   const typeLabel =
     TRANSACTION_TYPES.find((t) => t.value === transfer.type)?.label ?? transfer.type;
+  const [yyyy, mm, dd] = transfer.date.split('-');
+  const displayDate = `${dd}/${mm}/${yyyy}`;
 
   return (
     <Pressable onPress={() => onPress?.(transfer)}>
@@ -25,7 +27,7 @@ export function TransferListItem({ transfer, onPress }: TransferListItemProps) {
           {transfer.description}
         </Typography>
         <Typography variant="small" className="text-neutral-500">
-          {categoryLabel} · {typeLabel} · {transfer.date}
+          {categoryLabel} · {typeLabel} · {displayDate}
         </Typography>
         <Typography
           variant="body"

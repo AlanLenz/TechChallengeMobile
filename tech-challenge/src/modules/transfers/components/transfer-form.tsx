@@ -89,7 +89,6 @@ export function TransferForm({
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <View className="gap-4 pb-6">
-        {/* Description */}
         <Controller
           control={control}
           name="description"
@@ -105,7 +104,6 @@ export function TransferForm({
           )}
         />
 
-        {/* Amount — BRL mask */}
         <Controller
           control={control}
           name="amount"
@@ -134,7 +132,6 @@ export function TransferForm({
           )}
         />
 
-        {/* Date — DD/MM/YYYY mask */}
         <Controller
           control={control}
           name="date"

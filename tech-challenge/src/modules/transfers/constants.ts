@@ -3,13 +3,13 @@ import { createQueryKeys } from '@/lib/react-query';
 export const TRANSFERS_QUERY_KEYS = createQueryKeys('transfers');
 
 export const CATEGORIES = [
-  { value: 'food', label: 'Alimentação' },
-  { value: 'transport', label: 'Transporte' },
-  { value: 'housing', label: 'Moradia' },
-  { value: 'health', label: 'Saúde' },
-  { value: 'education', label: 'Educação' },
-  { value: 'leisure', label: 'Lazer' },
-  { value: 'other', label: 'Outros' },
+  { value: 1, label: 'Alimentação' },
+  { value: 2, label: 'Transporte' },
+  { value: 3, label: 'Moradia' },
+  { value: 4, label: 'Saúde' },
+  { value: 5, label: 'Educação' },
+  { value: 6, label: 'Lazer' },
+  { value: 7, label: 'Outros' },
 ] as const;
 
 export const TRANSACTION_TYPES = [

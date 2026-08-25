@@ -3,18 +3,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthContext } from '@/contexts/auth-context';
 
 import { TRANSFERS_QUERY_KEYS } from '../constants';
-import { createTransfer } from '../services/transfers.service';
-import type { CreateTransferFormValues } from '../validations';
+import { deleteTransfer } from '../services/transfers.service';
 
-export function useCreateTransfer() {
+export function useDeleteTransfer() {
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateTransferFormValues) => createTransfer(user!.uid, input),
+    mutationFn: (transferId: string) => deleteTransfer(user!.uid, transferId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSFERS_QUERY_KEYS.all });
     },
   });
 }
-

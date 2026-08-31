@@ -7,8 +7,8 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
-  type User,
   type Auth,
+  type User,
 } from 'firebase/auth';
 
 import { getFirebaseApp } from './config';
@@ -83,50 +83,13 @@ export function subscribeToAuthChanges(
   );
 }
 
-export async function resetPassword(email: string) {
-  return sendPasswordResetEmail(
+export async function resetPassword(
+  email: string
+): Promise<void> {
+  await sendPasswordResetEmail(
     getAuthInstance(),
     email
   );
-}
-
-export function getAuthErrorMessage(error: unknown): string {
-  if (
-    typeof error !== 'object' ||
-    error === null ||
-    !('code' in error)
-  ) {
-    return 'Ocorreu um erro inesperado.';
-  }
-
-  const code = String(error.code);
-
-  switch (code) {
-    case 'auth/email-already-in-use':
-      return 'Este e-mail já está cadastrado.';
-
-    case 'auth/invalid-email':
-      return 'O e-mail informado é inválido.';
-
-    case 'auth/invalid-credential':
-      return 'E-mail ou senha incorretos.';
-
-    case 'auth/weak-password':
-      return 'A senha precisa ter pelo menos 6 caracteres.';
-
-    case 'auth/user-not-found':
-      return 'Usuário não encontrado.';
-
-    case 'auth/too-many-requests':
-      return 'Muitas tentativas. Tente novamente mais tarde.';
-
-    default:
-      return 'Não foi possível realizar a operação.';
-  }
-}
-
-export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(getAuthInstance(), email);
 }
 
 export function getAuthErrorMessage(error: unknown): string {
@@ -136,20 +99,46 @@ export function getAuthErrorMessage(error: unknown): string {
     'code' in error
   ) {
     const code = (error as { code: string }).code;
+
     const messages: Record<string, string> = {
-      'auth/invalid-email': 'E-mail inválido.',
-      'auth/user-disabled': 'Esta conta foi desativada.',
-      'auth/user-not-found': 'Usuário não encontrado.',
-      'auth/wrong-password': 'Senha incorreta.',
-      'auth/email-already-in-use': 'Este e-mail já está em uso.',
-      'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
-      'auth/network-request-failed': 'Erro de rede. Verifique sua conexão.',
-      'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
-      'auth/operation-not-allowed': 'Operação não permitida.',
-      'auth/invalid-credential': 'Credenciais inválidas.',
+      'auth/invalid-email':
+        'E-mail inválido.',
+
+      'auth/user-disabled':
+        'Esta conta foi desativada.',
+
+      'auth/user-not-found':
+        'Usuário não encontrado.',
+
+      'auth/wrong-password':
+        'Senha incorreta.',
+
+      'auth/email-already-in-use':
+        'Este e-mail já está em uso.',
+
+      'auth/weak-password':
+        'A senha deve ter pelo menos 6 caracteres.',
+
+      'auth/network-request-failed':
+        'Erro de rede. Verifique sua conexão.',
+
+      'auth/too-many-requests':
+        'Muitas tentativas. Tente novamente mais tarde.',
+
+      'auth/operation-not-allowed':
+        'Operação não permitida.',
+
+      'auth/invalid-credential':
+        'E-mail ou senha incorretos.',
     };
+
     return messages[code] ?? `Erro de autenticação (${code}).`;
   }
-  if (error instanceof Error) return error.message;
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
   return 'Ocorreu um erro inesperado.';
 }
+

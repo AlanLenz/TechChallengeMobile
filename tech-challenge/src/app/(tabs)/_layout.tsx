@@ -32,7 +32,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="transfers"
         options={{
-          title: 'Transferências',
+          title: 'Transações',
           tabBarIcon: ({ focused, color }) => (
             <BottomTabItem
               focusedIcon="swap-horizontal"

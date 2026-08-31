@@ -1,35 +1,69 @@
+import { ScrollView, View } from 'react-native';
+
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
-import { Card } from '@/components/ui/card';
-import { Typography } from '@/components/ui/typography';
 import { ScreenContainer } from '@/components/layout/screen-container';
-import { formatCurrency } from '@/utils/format-currency';
+import { useAuthContext } from '@/contexts/auth-context';
 
-import { useDashboardSummary } from '../hooks/use-dashboard-summary';
+import { useHomeDashboard } from '../hooks/use-home-dashboard';
+import { CategoryChart } from './category-chart';
+import { HeroCard } from './hero-card';
+import { IncomeExpenseChart } from './income-expense-chart';
+import { RecentTransfersList } from './recent-transfers-list';
+import { StatsGrid } from './stats-grid';
 
 export function HomeScreen() {
-  const { data: accounts, isLoading } = useDashboardSummary();
+  const { user } = useAuthContext();
+  const { data: stats, isPending, isError } = useHomeDashboard();
 
-  const totalBalance = accounts?.reduce((sum, account) => sum + account.balance, 0) ?? 0;
+  const firstName = (user?.displayName ?? user?.email ?? 'Usuário').split(' ')[0];
+
+  if (isPending) {
+    return (
+      <ScreenContainer className="justify-center">
+        <Loading />
+      </ScreenContainer>
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <ScreenContainer className="justify-center">
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Erro ao carregar"
+          description="Não foi possível carregar o dashboard. Tente novamente."
+        />
+      </ScreenContainer>
+    );
+  }
 
   return (
-    <ScreenContainer className="gap-4 pt-4">
-      <Typography variant="title">Olá 👋</Typography>
+    <ScreenContainer className="px-0">
+      <ScrollView
+        contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <HeroCard firstName={firstName} balance={stats.totalBalance} />
 
-      {isLoading ? (
-        <Loading />
-      ) : !accounts || accounts.length === 0 ? (
-        <EmptyState
-          icon="wallet-outline"
-          title="Nenhuma conta encontrada"
-          description="Assim que você tiver contas cadastradas, o resumo financeiro aparece aqui."
+        <StatsGrid
+          totalIncome={stats.totalIncome}
+          totalExpenses={stats.totalExpenses}
+          biggestExpense={stats.biggestExpense}
+          transactionCount={stats.transactionCount}
         />
-      ) : (
-        <Card className="gap-1">
-          <Typography variant="small">Saldo total</Typography>
-          <Typography variant="display">{formatCurrency(totalBalance)}</Typography>
-        </Card>
-      )}
+
+        <View className="gap-4">
+          <IncomeExpenseChart
+            totalIncome={stats.totalIncome}
+            totalExpenses={stats.totalExpenses}
+          />
+          <CategoryChart data={stats.categoryBreakdown} />
+        </View>
+
+        <RecentTransfersList transfers={stats.recentTransfers} />
+      </ScrollView>
     </ScreenContainer>
   );
 }
+

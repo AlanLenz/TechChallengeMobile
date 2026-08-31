@@ -1,2 +1,3 @@
 export { HomeScreen } from './components/home-screen';
-export type { AccountSummary } from './types';
+export { useHomeDashboard } from './hooks/use-home-dashboard';
+export type { AccountSummary, DashboardStats } from './types';

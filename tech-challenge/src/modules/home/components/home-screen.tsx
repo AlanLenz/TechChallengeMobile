@@ -11,7 +11,7 @@ import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { CategoryChart } from './category-chart';
 import { HeroCard } from './hero-card';
 import { IncomeExpenseChart } from './income-expense-chart';
-import { RecentTransfersList } from './recent-transfers-list';
+import { RecentTransactionsList } from './recent-transactions-list';
 import { StatsGrid } from './stats-grid';
 
 export function HomeScreen() {
@@ -64,7 +64,7 @@ export function HomeScreen() {
           <CategoryChart data={stats.categoryBreakdown} />
         </View>
 
-        <RecentTransfersList transfers={stats.recentTransfers} />
+        <RecentTransactionsList transactions={stats.recentTransactions} />
       </ScrollView>
       <FloatingActionButton
         accessibilityLabel="Adicionar transação"

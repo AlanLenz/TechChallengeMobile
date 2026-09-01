@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  initializeFirestore,
   onSnapshot,
   query,
   setDoc,
@@ -23,7 +24,18 @@ let firestoreInstance: Firestore | undefined;
 
 function getDb(): Firestore {
   if (!firestoreInstance) {
-    firestoreInstance = getFirestore(getFirebaseApp());
+    const app = getFirebaseApp();
+    try {
+      // experimentalAutoDetectLongPolling avoids the IndexedDB "Database is
+      // closing/hidden" error on web (tab visibility changes, HMR restarts).
+      firestoreInstance = initializeFirestore(app, {
+        experimentalAutoDetectLongPolling: true,
+      });
+    } catch {
+      // Firestore was already initialised on this app instance (e.g. after a
+      // hot-module reload) — just grab the existing instance.
+      firestoreInstance = getFirestore(app);
+    }
   }
 
   return firestoreInstance;

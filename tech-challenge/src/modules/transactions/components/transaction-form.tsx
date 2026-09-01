@@ -1,41 +1,50 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Typography } from '@/components/ui/typography';
 
-import { CATEGORY_OPTIONS, TRANSFER_TYPE_OPTIONS } from '../constants';
+import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from '../constants';
 import type { CategoryId } from '../types';
-import { transferFormSchema, type TransferFormValues } from '../validations';
+import { transactionFormSchema, type TransactionFormValues } from '../validations';
 
-type TransferFormProps = {
-  initialValues?: Partial<TransferFormValues>;
-  onSubmit: (values: TransferFormValues) => void | Promise<void>;
+type TransactionFormProps = {
+  initialValues?: Partial<TransactionFormValues>;
+  onSubmit: (values: TransactionFormValues) => void | Promise<void>;
   submitLabel: string;
   isSubmitting?: boolean;
   submitError?: string;
+  /** Só telas de edição passam isso — quando ausente, o botão de excluir nem aparece. */
+  onDelete?: () => void | Promise<void>;
+  isDeleting?: boolean;
 };
 
-export function TransferForm({
+export function TransactionForm({
   initialValues,
   onSubmit,
   submitLabel,
   isSubmitting,
   submitError,
-}: TransferFormProps) {
+  onDelete,
+  isDeleting,
+}: TransactionFormProps) {
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
   const {
     control,
     handleSubmit,
     setValue,
     watch,
     formState: { errors },
-  } = useForm<TransferFormValues>({
-    resolver: zodResolver(transferFormSchema),
+  } = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionFormSchema),
     defaultValues: {
       type: 'Transfer',
       description: '',
@@ -76,7 +85,7 @@ export function TransferForm({
           render={({ field }) => (
             <Select
               label="Tipo"
-              options={TRANSFER_TYPE_OPTIONS}
+              options={TRANSACTION_TYPE_OPTIONS}
               value={field.value}
               onChange={field.onChange}
               error={errors.type?.message}
@@ -156,7 +165,40 @@ export function TransferForm({
         </Typography>
       ) : null}
 
-      <Button label={submitLabel} onPress={submit} loading={isSubmitting} />
+      <View className="gap-3">
+        <Button label={submitLabel} onPress={submit} loading={isSubmitting} />
+        {onDelete ? (
+          <Button
+            label="Excluir transação"
+            variant="danger"
+            onPress={() => setConfirmDeleteOpen(true)}
+            disabled={isSubmitting}
+          />
+        ) : null}
+      </View>
+
+      {onDelete ? (
+        <Modal visible={confirmDeleteOpen} onRequestClose={() => setConfirmDeleteOpen(false)} className="gap-4">
+          <Typography variant="subtitle">Excluir transação?</Typography>
+          <Typography variant="small">Essa ação não pode ser desfeita.</Typography>
+          <View className="flex-row gap-3">
+            <Button
+              label="Cancelar"
+              variant="secondary"
+              className="flex-1"
+              onPress={() => setConfirmDeleteOpen(false)}
+              disabled={isDeleting}
+            />
+            <Button
+              label="Excluir"
+              variant="danger"
+              className="flex-1"
+              loading={isDeleting}
+              onPress={onDelete}
+            />
+          </View>
+        </Modal>
+      ) : null}
     </View>
   );
 }

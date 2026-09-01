@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const transferFormSchema = z
+export const transactionFormSchema = z
   .object({
     type: z.enum(['Deposit', 'Transfer'], { message: 'Selecione o tipo.' }),
     description: z.string().min(1, 'Informe a descrição.'),
@@ -18,4 +18,4 @@ export const transferFormSchema = z
     path: ['categoriesId'],
   });
 
-export type TransferFormValues = z.infer<typeof transferFormSchema>;
+export type TransactionFormValues = z.infer<typeof transactionFormSchema>;

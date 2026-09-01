@@ -39,8 +39,8 @@ export function HomeScreen() {
       )}
 
       <FloatingActionButton
-        accessibilityLabel="Adicionar transferência"
-        onPress={() => router.push(ROUTES.MODALS.NEW_TRANSFER)}
+        accessibilityLabel="Adicionar transação"
+        onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
       />
     </ScreenContainer>
   );

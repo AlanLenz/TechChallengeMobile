@@ -1,5 +1,5 @@
 import type { WithId } from '@/types/api';
-import type { Transfer } from '@/modules/transfers';
+import type { Transaction } from '@/modules/transactions';
 
 export type AccountSummary = WithId<{
   ownerId: string;
@@ -10,10 +10,10 @@ export type AccountSummary = WithId<{
 export type DashboardStats = {
   totalBalance: number;
   totalIncome: number;      // sum of deposits
-  totalExpenses: number;    // sum of transfers + withdrawals
+  totalExpenses: number;    // sum of transfers
   biggestExpense: number;   // max single expense
   transactionCount: number;
-  recentTransfers: Transfer[];
+  recentTransactions: Transaction[];
   categoryBreakdown: { categoryId: number; label: string; total: number }[];
 };
 

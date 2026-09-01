@@ -1,18 +1,21 @@
-import { ScrollView, View } from 'react-native';
-
+import { useRouter } from 'expo-router';
+import { View , ScrollView} from 'react-native';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
+import { FloatingActionButton } from '@/components/ui/fab';
 import { ScreenContainer } from '@/components/layout/screen-container';
+import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
 
 import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { CategoryChart } from './category-chart';
 import { HeroCard } from './hero-card';
 import { IncomeExpenseChart } from './income-expense-chart';
-import { RecentTransfersList } from './recent-transfers-list';
+import { RecentTransactionsList } from './recent-transactions-list';
 import { StatsGrid } from './stats-grid';
 
 export function HomeScreen() {
+  const router = useRouter();
   const { user } = useAuthContext();
   const { data: stats, isPending, isError } = useHomeDashboard();
 
@@ -61,8 +64,12 @@ export function HomeScreen() {
           <CategoryChart data={stats.categoryBreakdown} />
         </View>
 
-        <RecentTransfersList transfers={stats.recentTransfers} />
+        <RecentTransactionsList transactions={stats.recentTransactions} />
       </ScrollView>
+      <FloatingActionButton
+        accessibilityLabel="Adicionar transação"
+        onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
+      />
     </ScreenContainer>
   );
 }

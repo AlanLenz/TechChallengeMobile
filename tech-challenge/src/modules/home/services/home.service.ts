@@ -1,6 +1,6 @@
 import { COLLECTIONS } from '@/constants/api';
 import { queryCollection } from '@/firebase/firestore';
-import type { Transfer } from '@/modules/transfers';
+import type { Transaction } from '@/modules/transactions';
 
 import type { AccountSummary } from '../types';
 
@@ -10,7 +10,7 @@ export async function getAccountsSummary(userId: string): Promise<AccountSummary
   ]);
 }
 
-export async function getTransfers(userId: string): Promise<Transfer[]> {
-  return queryCollection<Transfer>(`users/${userId}/transactions`);
+export async function getTransactions(userId: string): Promise<Transaction[]> {
+  return queryCollection<Transaction>(`users/${userId}/${COLLECTIONS.TRANSACTIONS}`);
 }
 

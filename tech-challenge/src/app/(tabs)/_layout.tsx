@@ -16,21 +16,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="accounts"
-        options={{
-          title: 'Contas',
-          tabBarIcon: ({ focused, color }) => (
-            <BottomTabItem
-              focusedIcon="wallet"
-              unfocusedIcon="wallet-outline"
-              focused={focused}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="transfers"
+        name="transactions"
         options={{
           title: 'Transações',
           tabBarIcon: ({ focused, color }) => (

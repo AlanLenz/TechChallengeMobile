@@ -6,12 +6,12 @@ export const ROUTES = {
   },
   TABS: {
     HOME: '/(tabs)',
-    ACCOUNTS: '/(tabs)/accounts',
-    TRANSFERS: '/(tabs)/transfers',
+    TRANSACTIONS: '/(tabs)/transactions',
     PROFILE: '/(tabs)/profile',
   },
   MODALS: {
-    NEW_TRANSFER: '/(modals)/new-transfer',
+    NEW_TRANSACTION: '/(modals)/new-transaction',
+    EDIT_TRANSACTION: '/(modals)/edit-transaction',
     EDIT_AVATAR: '/(modals)/edit-avatar',
   },
 } as const;

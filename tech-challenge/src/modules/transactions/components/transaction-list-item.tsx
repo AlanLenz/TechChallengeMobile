@@ -37,7 +37,7 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
             <Badge label={isDeposit ? 'Depósito' : 'Transferência'} tone={isDeposit ? 'success' : 'neutral'} />
           </View>
           <View className="flex-row items-center gap-2">
-            {transaction.receipt_url ? (
+            {transaction.receipt ? (
               <Ionicons name="attach-outline" size={16} color={colors.neutral[400]} />
             ) : null}
             {categoryLabel ? <Badge label={categoryLabel} /> : null}

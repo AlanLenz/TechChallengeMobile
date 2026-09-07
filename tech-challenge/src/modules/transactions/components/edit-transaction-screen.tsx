@@ -1,12 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { Header } from '@/components/layout/header';
-import { ScreenContainer } from '@/components/layout/screen-container';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
-import { useAuthContext } from '@/contexts/auth-context';
-import { getFileUrl, uploadFile } from '@/firebase/storage';
+import { Header } from '@/components/layout/header';
+import { ScreenContainer } from '@/components/layout/screen-container';
 
 import { useDeleteTransaction } from '../hooks/use-delete-transaction';
 import { useTransaction } from '../hooks/use-transaction';
@@ -17,27 +15,17 @@ import { TransactionForm } from './transaction-form';
 export function EditTransactionScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuthContext();
   const { data: transaction, isLoading } = useTransaction(id);
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
 
   const handleSubmit = async (values: TransactionFormValues) => {
-    let receiptUrl = values.receiptUrl;
-
-    if (values.receiptUri) {
-      const path = `users/${user!.uid}/transactions/${Date.now()}-receipt.jpg`;
-      const blob = await (await fetch(values.receiptUri)).blob();
-      await uploadFile(path, blob);
-      receiptUrl = await getFileUrl(path);
-    }
-
-    await updateTransaction.mutateAsync({ id, input: { ...values, receiptUrl } });
+    await updateTransaction.mutateAsync({ id, input: values, previousReceipt: transaction?.receipt });
     router.back();
   };
 
   const handleDelete = async () => {
-    await deleteTransaction.mutateAsync(id);
+    await deleteTransaction.mutateAsync({ id, receiptPath: transaction?.receipt?.path });
     router.back();
   };
 
@@ -75,7 +63,7 @@ export function EditTransactionScreen() {
               amount: String(transaction.amount).replace('.', ','),
               date: transaction.date,
               categoriesId: transaction.categories_id,
-              receiptUrl: transaction.receipt_url,
+              receipt: transaction.receipt,
             }}
           />
         </View>

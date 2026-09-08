@@ -1,15 +1,15 @@
 import { useRouter } from 'expo-router';
-import { View , ScrollView} from 'react-native';
+import {Animated ,View , ScrollView} from 'react-native';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
 import { FloatingActionButton } from '@/components/ui/fab';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
-
+import { useEffect, useRef } from 'react';
 import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { CategoryChart } from './category-chart';
-import { HeroCard } from './hero-card';
+import { AnimatedHeroCard } from './animated-hero-card';
 import { IncomeExpenseChart } from './income-expense-chart';
 import { RecentTransactionsList } from './recent-transactions-list';
 import { StatsGrid } from './stats-grid';
@@ -47,8 +47,10 @@ export function HomeScreen() {
         contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        <HeroCard firstName={firstName} balance={stats.totalBalance} />
-
+        <AnimatedHeroCard
+  firstName={firstName}
+  balance={stats.totalBalance}
+/>
         <StatsGrid
           totalIncome={stats.totalIncome}
           totalExpenses={stats.totalExpenses}

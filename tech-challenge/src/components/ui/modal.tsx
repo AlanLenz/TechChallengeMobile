@@ -7,7 +7,7 @@ type ModalProps = Omit<RNModalProps, 'transparent' | 'animationType'> & {
 };
 
 /**
- * Sheet modal para confirmações rápidas dentro de uma tela (ex.: "cancelar transferência?").
+ * Sheet modal para confirmações rápidas dentro de uma tela (ex.: "excluir transação?").
  * Diferente dos modais de navegação em src/app/(modals)/, que são fluxos completos de rota.
  */
 export function Modal({ children, onRequestClose, visible, className, ...rest }: ModalProps) {

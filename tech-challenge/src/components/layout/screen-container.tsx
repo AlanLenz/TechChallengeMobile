@@ -11,8 +11,8 @@ type ScreenContainerProps = ViewProps & {
 
 export function ScreenContainer({ children, edges = ['top', 'bottom'], className, ...rest }: ScreenContainerProps) {
   return (
-    <SafeAreaView edges={edges} className="flex-1 bg-white dark:bg-black">
-      <View className={cx('flex-1 px-screen-x', className)} {...rest}>
+    <SafeAreaView edges={edges} className="flex-1 bg-background">
+      <View className={cx('flex-1', className)} {...rest}>
         {children}
       </View>
     </SafeAreaView>

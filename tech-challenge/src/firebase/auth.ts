@@ -62,6 +62,16 @@ export async function signOut(): Promise<void> {
   await firebaseSignOut(getAuthInstance());
 }
 
+export async function updateCurrentUserProfile(
+  data: { displayName?: string; photoURL?: string }
+): Promise<void> {
+  const user = getAuthInstance().currentUser;
+
+  if (!user) return;
+
+  await updateProfile(user, data);
+}
+
 export async function reloadCurrentUser(): Promise<User | null> {
   const user = getAuthInstance().currentUser;
 

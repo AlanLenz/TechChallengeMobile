@@ -1,3 +1,4 @@
+import { COLLECTIONS } from '@/constants/api';
 import { createQueryKeys } from '@/lib/react-query';
 
 import { CATEGORIES_MAP, type CategoryFilter, type CategoryId, type TransactionType } from './types';
@@ -32,3 +33,28 @@ export const ATTACHMENT_FILTER_OPTIONS: { value: 'all' | 'with' | 'without'; lab
   { value: 'with', label: 'Com anexo' },
   { value: 'without', label: 'Sem anexo' },
 ];
+
+// --- Comprovante / recibo ---------------------------------------------------------------
+
+/** Tipos MIME aceitos como comprovante — imagens comuns de foto + PDF de extrato. */
+export const RECEIPT_ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+] as const;
+
+/** Extensões correspondentes (fallback quando o picker não informa o MIME type). */
+export const RECEIPT_ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf'] as const;
+
+/**
+ * Limite de 5 MB. Fotos de comprovante de celular e PDFs de extrato ficam tipicamente entre
+ * 100 KB e 3 MB; 5 MB dá folga sem permitir abuso e é o mesmo limite declarado em
+ * `storage.rules`.
+ */
+export const RECEIPT_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+
+/** Caminho no Storage: espelha o modelo per-user do Firestore (`users/{uid}/transactions/...`). */
+export function getReceiptStoragePath(userId: string, transactionId: string, fileName: string): string {
+  return `users/${userId}/${COLLECTIONS.TRANSACTIONS}/${transactionId}/receipts/${fileName}`;
+}

@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -14,6 +13,7 @@ import { Typography } from '@/components/ui/typography';
 import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from '../constants';
 import type { CategoryId } from '../types';
 import { transactionFormSchema, type TransactionFormValues } from '../validations';
+import { ReceiptField } from './receipt-field';
 
 type TransactionFormProps = {
   initialValues?: Partial<TransactionFormValues>;
@@ -51,28 +51,14 @@ export function TransactionForm({
       amount: '',
       date: '',
       categoriesId: undefined,
-      receiptUri: undefined,
-      receiptUrl: undefined,
+      receiptFile: undefined,
+      receipt: undefined,
       ...initialValues,
     },
   });
 
-  const receiptUri = watch('receiptUri');
-  const receiptUrl = watch('receiptUrl');
-
-  const pickReceipt = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setValue('receiptUri', result.assets[0].uri, { shouldDirty: true });
-    }
-  };
+  const receiptFile = watch('receiptFile');
+  const receipt = watch('receipt');
 
   const submit = handleSubmit((values) => onSubmit(values));
 
@@ -148,16 +134,18 @@ export function TransactionForm({
           )}
         />
 
-        <View className="gap-1.5">
-          <Typography variant="small" className="font-medium text-neutral-700 dark:text-neutral-200">
-            Comprovante (opcional)
-          </Typography>
-          <Button
-            label={receiptUri || receiptUrl ? 'Trocar comprovante' : 'Anexar comprovante'}
-            variant="secondary"
-            onPress={pickReceipt}
-          />
-        </View>
+        <ReceiptField
+          receiptFile={receiptFile}
+          receipt={receipt}
+          onPickFile={(file) => setValue('receiptFile', file, { shouldDirty: true, shouldValidate: true })}
+          onRemove={() => {
+            setValue('receiptFile', undefined, { shouldDirty: true });
+            setValue('receipt', undefined, { shouldDirty: true });
+          }}
+          error={errors.receiptFile?.message}
+          isUploading={Boolean(isSubmitting && receiptFile)}
+          disabled={isSubmitting}
+        />
       </View>
       {submitError ? (
         <Typography variant="small" className="text-danger-500">

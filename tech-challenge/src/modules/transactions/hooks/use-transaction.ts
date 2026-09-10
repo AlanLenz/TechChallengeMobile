@@ -1,18 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useTransactionsContext } from '@/contexts/transactions-context';
 
-import { useAuthContext } from '@/contexts/auth-context';
-
-import { TRANSACTIONS_QUERY_KEYS } from '../constants';
-import { getTransaction } from '../services/transactions.service';
-
-/** Busca uma transação por id — usado pela tela de edição, que pode ser aberta diretamente
- * (sem depender do cache da listagem já estar populado). */
+/** Busca uma transação por id diretamente do estado global do TransactionsContext. */
 export function useTransaction(id?: string) {
-  const { user } = useAuthContext();
+  const { transactions, isLoading } = useTransactionsContext();
+  const transaction = transactions.find((t) => t.id === id);
 
-  return useQuery({
-    queryKey: TRANSACTIONS_QUERY_KEYS.detail(id ?? ''),
-    queryFn: () => getTransaction(user!.uid, id!),
-    enabled: Boolean(user) && Boolean(id),
-  });
+  return {
+    data: transaction,
+    isLoading: isLoading && !transaction,
+  };
 }
+

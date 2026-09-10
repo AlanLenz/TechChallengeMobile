@@ -10,12 +10,12 @@ import { colors } from '@/theme';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
 
-import { CATEGORIES_MAP, type Transaction } from '../types';
+import { CATEGORIES_MAP, isDepositType, type Transaction } from '../types';
 
 export function TransactionListItem({ transaction }: { transaction: Transaction }) {
   const router = useRouter();
   const categoryLabel = transaction.categories_id ? CATEGORIES_MAP[transaction.categories_id] : undefined;
-  const isDeposit = transaction.type === 'Deposit';
+  const isDeposit = isDepositType(transaction.type);
 
   return (
     <Pressable

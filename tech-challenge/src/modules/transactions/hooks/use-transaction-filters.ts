@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { TransactionFilters } from '../types';
+import { validateDateRange } from '../validations';
 
 const INITIAL_FILTERS: TransactionFilters = {
   description: '',
@@ -20,12 +21,18 @@ export function useTransactionFilters() {
   const [applied, setApplied] = useState<TransactionFilters>(INITIAL_FILTERS);
   const [page, setPage] = useState(1);
 
+  const dateError = validateDateRange(draft.startDate, draft.endDate);
+
   function setField<K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }
 
   function apply() {
-    setApplied(draft);
+    if (dateError) return;
+    setApplied({
+      ...draft,
+      description: draft.description.trim(),
+    });
     setPage(1);
   }
 
@@ -35,5 +42,6 @@ export function useTransactionFilters() {
     setPage(1);
   }
 
-  return { draft, setField, applied, apply, clear, page, setPage };
+  return { draft, setField, applied, apply, clear, page, setPage, dateError };
 }
+

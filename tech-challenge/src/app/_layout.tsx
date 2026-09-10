@@ -12,6 +12,7 @@ import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
 import { ConnectivityProvider } from '@/contexts/connectivity-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { TransactionsProvider } from '@/contexts/transactions-context';
 import { queryClient } from '@/services/query-client';
 
 SplashScreen.preventAutoHideAsync();
@@ -47,15 +48,17 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider>
-              <ConnectivityProvider>
-                <NotificationProvider>
-                  <AppProvider>
-                    <RootNavigator />
-                  </AppProvider>
-                </NotificationProvider>
-              </ConnectivityProvider>
-            </ThemeProvider>
+            <TransactionsProvider>
+              <ThemeProvider>
+                <ConnectivityProvider>
+                  <NotificationProvider>
+                    <AppProvider>
+                      <RootNavigator />
+                    </AppProvider>
+                  </NotificationProvider>
+                </ConnectivityProvider>
+              </ThemeProvider>
+            </TransactionsProvider>
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

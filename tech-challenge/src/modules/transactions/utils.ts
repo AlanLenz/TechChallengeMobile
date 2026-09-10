@@ -1,6 +1,6 @@
 import { endOfDay, startOfDay } from 'date-fns';
 
-import type { Transaction, TransactionFilters } from './types';
+import { isDepositType, type Transaction, type TransactionFilters } from './types';
 
 /** Filtro client-side: a listagem já carrega todas as transações do usuário via React Query
  * (não há paginação/filtro no lado do Firestore hoje — ver services/transactions.service.ts),
@@ -18,7 +18,7 @@ export function filterTransactions(transactions: Transaction[], filters: Transac
     if (start && transactionDate < start) return false;
     if (end && transactionDate > end) return false;
 
-    if (filters.type !== 'all' && transaction.type !== filters.type) return false;
+    if (filters.type !== 'all' && isDepositType(transaction.type) !== isDepositType(filters.type)) return false;
     if (filters.categoryId !== 'all' && transaction.categories_id !== filters.categoryId) return false;
 
     if (filters.attachment === 'with' && !transaction.receipt_url) return false;

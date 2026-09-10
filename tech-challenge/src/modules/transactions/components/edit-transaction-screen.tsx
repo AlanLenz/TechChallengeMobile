@@ -11,7 +11,9 @@ import { getFileUrl, uploadFile } from '@/firebase/storage';
 import { useDeleteTransaction } from '../hooks/use-delete-transaction';
 import { useTransaction } from '../hooks/use-transaction';
 import { useUpdateTransaction } from '../hooks/use-update-transaction';
+import { isDepositType } from '../types';
 import type { TransactionFormValues } from '../validations';
+import { maskCurrency } from '@/utils/mask';
 import { TransactionForm } from './transaction-form';
 
 export function EditTransactionScreen() {
@@ -70,9 +72,9 @@ export function EditTransactionScreen() {
             onDelete={handleDelete}
             isDeleting={deleteTransaction.isPending}
             initialValues={{
-              type: transaction.type,
+              type: isDepositType(transaction.type) ? 'Deposit' : 'Transfer',
               description: transaction.description,
-              amount: String(transaction.amount).replace('.', ','),
+              amount: maskCurrency(transaction.amount),
               date: transaction.date,
               categoriesId: transaction.categories_id,
               receiptUrl: transaction.receipt_url,

@@ -1,16 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { useAuthContext } from '@/contexts/auth-context';
-
-import { TRANSACTIONS_QUERY_KEYS } from '../constants';
-import { getTransactions } from '../services/transactions.service';
+import { useTransactionsContext } from '@/contexts/transactions-context';
 
 export function useTransactions() {
-  const { user } = useAuthContext();
+  const { transactions, isLoading, error, refreshTransactions } = useTransactionsContext();
 
-  return useQuery({
-    queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
-    queryFn: () => getTransactions(user!.uid),
-    enabled: Boolean(user),
-  });
+  return {
+    data: transactions,
+    isLoading,
+    isError: Boolean(error),
+    error,
+    refetch: refreshTransactions,
+  };
 }
+

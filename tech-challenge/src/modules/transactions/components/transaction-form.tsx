@@ -14,6 +14,7 @@ import { Typography } from '@/components/ui/typography';
 import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from '../constants';
 import type { CategoryId } from '../types';
 import { transactionFormSchema, type TransactionFormValues } from '../validations';
+import { maskCurrency } from '@/utils/mask';
 
 type TransactionFormProps = {
   initialValues?: Partial<TransactionFormValues>;
@@ -54,6 +55,7 @@ export function TransactionForm({
       receiptUri: undefined,
       receiptUrl: undefined,
       ...initialValues,
+      ...(initialValues?.amount ? { amount: maskCurrency(initialValues.amount) } : {}),
     },
   });
 
@@ -99,6 +101,7 @@ export function TransactionForm({
             <Input
               label="Descrição"
               placeholder="Ex.: Almoço, Uber, aluguel..."
+              maxLength={100}
               error={errors.description?.message}
               value={field.value}
               onChangeText={field.onChange}
@@ -112,11 +115,11 @@ export function TransactionForm({
           render={({ field }) => (
             <Input
               label="Valor"
-              placeholder="0,00"
-              keyboardType="decimal-pad"
+              placeholder="R$ 0,00"
+              keyboardType="numeric"
               error={errors.amount?.message}
               value={field.value}
-              onChangeText={field.onChange}
+              onChangeText={(text) => field.onChange(maskCurrency(text))}
               onBlur={field.onBlur}
             />
           )}

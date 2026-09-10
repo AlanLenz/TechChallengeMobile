@@ -1,6 +1,8 @@
 import { COLLECTIONS } from '@/constants/api';
 import { addDocument, deleteDocument, getDocument, queryCollection, updateDocument } from '@/firebase/firestore';
 
+import { parseCurrencyToNumber } from '@/utils/mask';
+
 import type { CategoryId, Transaction } from '../types';
 import type { TransactionFormValues } from '../validations';
 
@@ -10,8 +12,8 @@ function transactionsPath(userId: string): string {
 
 function toDocumentData(input: TransactionFormValues) {
   return {
-    description: input.description,
-    amount: Number(input.amount.replace(',', '.')),
+    description: input.description.trim(),
+    amount: parseCurrencyToNumber(input.amount),
     date: input.date,
     type: input.type,
     categories_id: input.categoriesId as CategoryId,

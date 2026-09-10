@@ -3,8 +3,10 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { isEnvValid } from '@/config/env';
 import {
   reloadCurrentUser,
+  resetPassword as firebaseResetPassword,
   signIn as firebaseSignIn,
   signOut as firebaseSignOut,
+  signUp as firebaseSignUp,
   subscribeToAuthChanges,
   type User,
 } from '@/firebase/auth';
@@ -14,7 +16,9 @@ type AuthContextValue = {
   user: User | null;
   status: AuthStatus;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -44,7 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn: async (email, password) => {
         await firebaseSignIn(email, password);
       },
+      signUp: async (name, email, password) => {
+        await firebaseSignUp(name, email, password);
+      },
       signOut: firebaseSignOut,
+      resetPassword: async (email) => {
+        await firebaseResetPassword(email);
+      },
       refreshUser: async () => {
         const refreshed = await reloadCurrentUser();
         setUser(refreshed);

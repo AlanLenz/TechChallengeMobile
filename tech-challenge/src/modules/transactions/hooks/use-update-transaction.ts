@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
+import { useTransactionsContext } from '@/contexts/transactions-context';
 import { useAuthContext } from '@/contexts/auth-context';
 
 import { TRANSACTIONS_QUERY_KEYS } from '../constants';
@@ -19,8 +20,29 @@ type UpdateTransactionArgs = {
 };
 
 export function useUpdateTransaction() {
-  const { user } = useAuthContext();
-  const queryClient = useQueryClient();
+  const { updateTransaction } = useTransactionsContext();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const mutateAsync = async ({
+    id,
+    input,
+  }: {
+    id: string;
+    input: TransactionFormValues;
+  }): Promise<void> => {
+    setIsPending(true);
+    setError(null);
+    try {
+      await updateTransaction(id, input);
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error('Não foi possível salvar a transação.');
+      setError(e);
+      throw e;
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return useMutation({
     mutationFn: async ({ id, input, previousReceipt }: UpdateTransactionArgs) => {
@@ -42,3 +64,4 @@ export function useUpdateTransaction() {
     },
   });
 }
+

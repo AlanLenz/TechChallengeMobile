@@ -19,7 +19,7 @@ import { TransactionListItem } from './transaction-list-item';
 export function TransactionsScreen() {
   const router = useRouter();
   const { data: transactions, isLoading } = useTransactions();
-  const { draft, setField, applied, apply, clear, page, setPage } = useTransactionFilters();
+  const { draft, setField, applied, apply, clear, page, setPage, dateError } = useTransactionFilters();
 
   const filtered = useMemo(() => filterTransactions(transactions ?? [], applied), [transactions, applied]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / TRANSACTIONS_PAGE_SIZE));
@@ -50,7 +50,13 @@ export function TransactionsScreen() {
           contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
           renderItem={({ item }) => <TransactionListItem transaction={item} />}
           ListHeaderComponent={
-            <TransactionFiltersPanel filters={draft} onChange={setField} onApply={apply} onClear={clear} />
+            <TransactionFiltersPanel
+              filters={draft}
+              dateError={dateError}
+              onChange={setField}
+              onApply={apply}
+              onClear={clear}
+            />
           }
           ListFooterComponent={
             filtered.length > 0 ? (

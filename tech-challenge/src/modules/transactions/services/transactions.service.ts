@@ -21,8 +21,8 @@ function transactionsPath(userId: string): string {
 /** Campos de domínio da transação — sem `receiptFile`/`receipt`, tratados à parte. */
 function toDocumentData(input: TransactionFormValues) {
   return {
-    description: input.description,
-    amount: Number(input.amount.replace(',', '.')),
+    description: input.description.trim(),
+    amount: parseCurrencyToNumber(input.amount),
     date: input.date,
     type: input.type,
     categories_id: input.categoriesId as CategoryId,

@@ -1,9 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
-import { useAuthContext } from '@/contexts/auth-context';
-
-import { TRANSACTIONS_QUERY_KEYS } from '../constants';
-import { deleteTransaction } from '../services/transactions.service';
+import { useTransactionsContext } from '@/contexts/transactions-context';
 
 type DeleteTransactionArgs = {
   id: string;
@@ -12,8 +9,23 @@ type DeleteTransactionArgs = {
 };
 
 export function useDeleteTransaction() {
-  const { user } = useAuthContext();
-  const queryClient = useQueryClient();
+  const { deleteTransaction } = useTransactionsContext();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const mutateAsync = async (id: string): Promise<void> => {
+    setIsPending(true);
+    setError(null);
+    try {
+      await deleteTransaction(id);
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error('Não foi possível excluir a transação.');
+      setError(e);
+      throw e;
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return useMutation({
     mutationFn: ({ id, receiptPath }: DeleteTransactionArgs) =>
@@ -23,3 +35,4 @@ export function useDeleteTransaction() {
     },
   });
 }
+

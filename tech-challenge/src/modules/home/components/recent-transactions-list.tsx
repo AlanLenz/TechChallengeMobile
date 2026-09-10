@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 import { ROUTES } from '@/constants/routes';
-import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS, type Transaction } from '@/modules/transactions';
+import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS, isDepositType, type Transaction } from '@/modules/transactions';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
 
@@ -26,11 +26,13 @@ export function RecentTransactionsList({ transactions }: RecentTransactionsListP
       ) : (
         <View className="gap-3">
           {transactions.map((t) => {
-            const typeLabel = TRANSACTION_TYPE_OPTIONS.find((x) => x.value === t.type)?.label ?? t.type;
+            const isIncome = isDepositType(t.type);
+            const typeLabel = isIncome
+              ? 'Depósito'
+              : TRANSACTION_TYPE_OPTIONS.find((x) => x.value === t.type)?.label ?? 'Transferência';
             const categoryLabel = t.categories_id
               ? CATEGORY_OPTIONS.find((c) => c.value === t.categories_id)?.label
               : undefined;
-            const isIncome = t.type === 'Deposit';
 
             return (
               <View key={t.id} className="flex-row items-start justify-between">

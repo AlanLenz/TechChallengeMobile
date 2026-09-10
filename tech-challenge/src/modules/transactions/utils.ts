@@ -76,7 +76,7 @@ export function filterTransactions(transactions: Transaction[], filters: Transac
     if (start && transactionDate < start) return false;
     if (end && transactionDate > end) return false;
 
-    if (filters.type !== 'all' && transaction.type !== filters.type) return false;
+    if (filters.type !== 'all' && isDepositType(transaction.type) !== isDepositType(filters.type)) return false;
     if (filters.categoryId !== 'all' && transaction.categories_id !== filters.categoryId) return false;
 
     if (filters.attachment === 'with' && !transaction.receipt) return false;

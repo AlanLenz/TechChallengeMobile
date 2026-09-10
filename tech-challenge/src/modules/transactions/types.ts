@@ -2,6 +2,10 @@ import type { WithId } from '@/types/api';
 
 export type TransactionType = 'Deposit' | 'Transfer';
 
+export function isDepositType(type?: string): boolean {
+  return String(type).toLowerCase() === 'deposit';
+}
+
 export type CategoryId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const CATEGORIES_MAP: Record<CategoryId, string> = {

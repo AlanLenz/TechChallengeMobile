@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -39,6 +40,14 @@ function getDb(): Firestore {
   }
 
   return firestoreInstance;
+}
+
+/**
+ * Sentinela do Firestore para remover um campo num `updateDocument` (o SDK não aceita
+ * `undefined` num update). Ex.: `updateDocument(path, id, { receipt: deleteFieldValue() })`.
+ */
+export function deleteFieldValue() {
+  return deleteField();
 }
 
 export type WhereClause<T> = {

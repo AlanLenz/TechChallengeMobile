@@ -3,8 +3,6 @@ import { View } from 'react-native';
 
 import { Header } from '@/components/layout/header';
 import { ScreenContainer } from '@/components/layout/screen-container';
-import { useAuthContext } from '@/contexts/auth-context';
-import { getFileUrl, uploadFile } from '@/firebase/storage';
 
 import { useCreateTransaction } from '../hooks/use-create-transaction';
 import type { TransactionFormValues } from '../validations';
@@ -12,20 +10,10 @@ import { TransactionForm } from './transaction-form';
 
 export function NewTransactionScreen() {
   const router = useRouter();
-  const { user } = useAuthContext();
   const createTransaction = useCreateTransaction();
 
   const handleSubmit = async (values: TransactionFormValues) => {
-    let receiptUrl = values.receiptUrl;
-
-    if (values.receiptUri) {
-      const path = `users/${user!.uid}/transactions/${Date.now()}-receipt.jpg`;
-      const blob = await (await fetch(values.receiptUri)).blob();
-      await uploadFile(path, blob);
-      receiptUrl = await getFileUrl(path);
-    }
-
-    await createTransaction.mutateAsync({ ...values, receiptUrl });
+    await createTransaction.mutateAsync(values);
     router.back();
   };
 

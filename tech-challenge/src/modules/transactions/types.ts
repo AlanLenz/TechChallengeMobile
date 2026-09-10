@@ -18,13 +18,25 @@ export const CATEGORIES_MAP: Record<CategoryId, string> = {
   7: 'Outros',
 };
 
+/** Recibo/comprovante anexado a uma transação, armazenado no Firebase Storage. */
+export type TransactionReceipt = {
+  /** Nome original do arquivo escolhido pelo usuário — só metadado, para exibição. */
+  name: string;
+  /** Download URL público (com token) do Firebase Storage. */
+  url: string;
+  /** Caminho completo no Storage — usado para reabrir ou apagar o arquivo. */
+  path: string;
+  /** MIME type do arquivo (ex.: 'application/pdf', 'image/jpeg'). */
+  contentType: string;
+};
+
 export type Transaction = WithId<{
   description: string;
   amount: number;
   date: string;
   type: TransactionType;
   categories_id?: CategoryId;
-  receipt_url?: string;
+  receipt?: TransactionReceipt;
 }>;
 
 /** Sentinela "all" representa "sem filtro" nos selects de filtro — não é um valor de domínio. */

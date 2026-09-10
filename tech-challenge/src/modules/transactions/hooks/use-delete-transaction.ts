@@ -2,6 +2,12 @@ import { useState } from 'react';
 
 import { useTransactionsContext } from '@/contexts/transactions-context';
 
+type DeleteTransactionArgs = {
+  id: string;
+  /** Caminho do comprovante no Storage, se houver — apagado junto com a transação. */
+  receiptPath?: string;
+};
+
 export function useDeleteTransaction() {
   const { deleteTransaction } = useTransactionsContext();
   const [isPending, setIsPending] = useState(false);
@@ -21,11 +27,12 @@ export function useDeleteTransaction() {
     }
   };
 
-  return {
-    mutateAsync,
-    isPending,
-    isError: Boolean(error),
-    error,
-  };
+  return useMutation({
+    mutationFn: ({ id, receiptPath }: DeleteTransactionArgs) =>
+      deleteTransaction(user!.uid, id, receiptPath),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEYS.all });
+    },
+  });
 }
 

@@ -13,11 +13,14 @@ import {
   CATEGORY_OPTIONS,
   createTransaction as createTransactionService,
   deleteTransaction as deleteTransactionService,
+  deleteTransactionReceipt,
   getTransactions,
   isDepositType,
   updateTransaction as updateTransactionService,
+  uploadTransactionReceipt,
   type Transaction,
   type TransactionFormValues,
+  type TransactionReceipt,
 } from '@/modules/transactions';
 
 export type CategoryBreakdownItem = {
@@ -43,8 +46,12 @@ export type TransactionsContextValue = {
 
   // Ações CRUD
   createTransaction: (input: TransactionFormValues) => Promise<string>;
-  updateTransaction: (id: string, input: TransactionFormValues) => Promise<void>;
-  deleteTransaction: (id: string) => Promise<void>;
+  updateTransaction: (
+    id: string,
+    input: TransactionFormValues,
+    previousReceipt?: TransactionReceipt
+  ) => Promise<void>;
+  deleteTransaction: (id: string, receiptPath?: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
 };
 
@@ -111,6 +118,10 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     async (input: TransactionFormValues): Promise<string> => {
       if (!user) throw new Error('Usuário não autenticado.');
       const id = await createTransactionService(user.uid, input);
+      if (input.receiptFile) {
+        const receipt = await uploadTransactionReceipt(user.uid, id, input.receiptFile);
+        await updateTransactionService(user.uid, id, input, receipt, false);
+      }
       await reload();
       return id;
     },
@@ -118,18 +129,30 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   );
 
   const updateTransaction = useCallback(
-    async (id: string, input: TransactionFormValues): Promise<void> => {
+    async (
+      id: string,
+      input: TransactionFormValues,
+      previousReceipt?: TransactionReceipt
+    ): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
-      await updateTransactionService(user.uid, id, input);
+      const receipt = input.receiptFile
+        ? await uploadTransactionReceipt(user.uid, id, input.receiptFile)
+        : input.receipt;
+
+      await updateTransactionService(user.uid, id, input, receipt, Boolean(previousReceipt));
+
+      if (previousReceipt && previousReceipt.path !== receipt?.path) {
+        await deleteTransactionReceipt(previousReceipt.path);
+      }
       await reload();
     },
     [user, reload]
   );
 
   const deleteTransaction = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, receiptPath?: string): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
-      await deleteTransactionService(user.uid, id);
+      await deleteTransactionService(user.uid, id, receiptPath);
       await reload();
     },
     [user, reload]

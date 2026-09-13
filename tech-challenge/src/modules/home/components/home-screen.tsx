@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
-import {Animated ,View , ScrollView} from 'react-native';
+import { ScrollView, View } from 'react-native';
+
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
-import { FloatingActionButton } from '@/components/ui/fab';
 import { ScreenContainer } from '@/components/layout/screen-container';
+import { FloatingActionButton } from '@/components/ui/fab';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
-import { useEffect, useRef } from 'react';
+
 import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { CategoryChart } from './category-chart';
 import { AnimatedHeroCard } from './animated-hero-card';

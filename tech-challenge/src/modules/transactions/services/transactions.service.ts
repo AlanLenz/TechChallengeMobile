@@ -13,6 +13,7 @@ import { getReceiptStoragePath } from '../constants';
 import type { CategoryId, Transaction, TransactionReceipt } from '../types';
 import { randomFileSuffix, resolveReceiptMimeType, storedFileExtension, type ReceiptFileInput } from '../utils';
 import type { TransactionFormValues } from '../validations';
+import { parseCurrencyToNumber } from '@/utils/mask';
 
 function transactionsPath(userId: string): string {
   return `users/${userId}/${COLLECTIONS.TRANSACTIONS}`;

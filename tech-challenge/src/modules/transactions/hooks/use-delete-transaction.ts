@@ -13,11 +13,13 @@ export function useDeleteTransaction() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const mutateAsync = async (id: string): Promise<void> => {
+  const mutateAsync = async (args: string | DeleteTransactionArgs): Promise<void> => {
     setIsPending(true);
     setError(null);
     try {
-      await deleteTransaction(id);
+      const id = typeof args === 'string' ? args : args.id;
+      const receiptPath = typeof args === 'string' ? undefined : args.receiptPath;
+      await deleteTransaction(id, receiptPath);
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Não foi possível excluir a transação.');
       setError(e);
@@ -27,12 +29,12 @@ export function useDeleteTransaction() {
     }
   };
 
-  return useMutation({
-    mutationFn: ({ id, receiptPath }: DeleteTransactionArgs) =>
-      deleteTransaction(user!.uid, id, receiptPath),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEYS.all });
-    },
-  });
+  return {
+    mutateAsync,
+    isPending,
+    isError: Boolean(error),
+    error,
+  };
 }
+
 

@@ -1,4 +1,4 @@
-export { ForgotPasswordScreen } from './components/forgot-password-screen';
-export { LoginScreen } from './components/login-screen';
-export { RegisterScreen } from './components/register-screen';
-export type { ForgotPasswordInput, LoginInput, RegisterInput } from './types';
+export { ForgotPasswordScreen } from './presentation/components/forgot-password-screen';
+export { LoginScreen } from './presentation/components/login-screen';
+export { RegisterScreen } from './presentation/components/register-screen';
+export type { ForgotPasswordInput, LoginInput, RegisterInput } from './domain/entities/auth.entity';

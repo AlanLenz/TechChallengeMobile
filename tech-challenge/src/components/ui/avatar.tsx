@@ -1,4 +1,5 @@
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
 
 import { cx } from '@/utils/cx';
 
@@ -22,7 +23,7 @@ export function Avatar({ name, photoUrl, size = 40, className }: AvatarProps) {
   const dimension = { width: size, height: size, borderRadius: size / 2 };
 
   if (photoUrl) {
-    return <Image source={{ uri: photoUrl }} style={dimension} />;
+    return <Image source={{ uri: photoUrl }} style={dimension} contentFit="cover" transition={200} cachePolicy="memory-disk" />;
   }
 
   return (

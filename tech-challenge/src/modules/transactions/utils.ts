@@ -1,7 +1,7 @@
 import { endOfDay, startOfDay } from 'date-fns';
 
 import { RECEIPT_ALLOWED_EXTENSIONS, RECEIPT_ALLOWED_MIME_TYPES } from './constants';
-import { isDepositType, type Transaction, type TransactionFilters } from './types';
+import { isDepositType, type Transaction, type TransactionFilters } from './domain/entities/transaction.entity';
 
 /** Arquivo selecionado pelo picker, antes do upload — formato normalizado interno do module. */
 export type ReceiptFileInput = {

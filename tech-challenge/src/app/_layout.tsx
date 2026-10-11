@@ -2,6 +2,8 @@ import '@/global.css';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,15 +21,18 @@ SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const { status } = useAuthContext();
+  const [loaded] = useFonts({
+    ...Ionicons.font,
+  });
 
   useEffect(() => {
-    if (status !== 'loading') {
+    if (status !== 'loading' && loaded) {
       SplashScreen.hideAsync();
     }
-  }, [status]);
+  }, [status, loaded]);
 
   // Mantém a splash nativa visível (ainda não escondida) enquanto o Firebase resolve a sessão.
-  if (status === 'loading') return null;
+  if (status === 'loading' || !loaded) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

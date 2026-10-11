@@ -1,18 +1,18 @@
-export { EditTransactionScreen } from './components/edit-transaction-screen';
-export { NewTransactionScreen } from './components/new-transaction-screen';
-export { TransactionForm } from './components/transaction-form';
-export { TransactionsScreen } from './components/transactions-screen';
+export { EditTransactionScreen } from './presentation/components/edit-transaction-screen';
+export { NewTransactionScreen } from './presentation/components/new-transaction-screen';
+export { TransactionForm } from './presentation/components/transaction-form';
+export { TransactionsScreen } from './presentation/components/transactions-screen';
 export { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from './constants';
-export { CATEGORIES_MAP, isDepositType } from './types';
+export { CATEGORIES_MAP, isDepositType } from './domain/entities/transaction.entity';
 export type {
   CategoryId,
   Transaction,
   TransactionFilters,
   TransactionReceipt,
   TransactionType,
-} from './types';
-export { transactionFormSchema, validateDateRange } from './validations';
-export type { TransactionFormValues } from './validations';
+} from './domain/entities/transaction.entity';
+export { transactionFormSchema, validateDateRange } from './domain/entities/transaction.validation';
+export type { TransactionFormValues } from './domain/entities/transaction.validation';
 export {
   createTransaction,
   deleteTransaction,
@@ -21,5 +21,5 @@ export {
   getTransactions,
   updateTransaction,
   uploadTransactionReceipt,
-} from './services/transactions.service';
+} from './infrastructure/firebase/firebase-transaction.repository';
 

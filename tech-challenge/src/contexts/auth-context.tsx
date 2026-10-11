@@ -36,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = subscribeToAuthChanges((nextUser) => {
       setUser(nextUser);
       setStatus(nextUser ? 'authenticated' : 'unauthenticated');
+
+      // Preload user avatar image if it exists
+      if (nextUser?.photoURL) {
+        import('expo-image').then(({ Image }) => {
+          Image.prefetch(nextUser.photoURL!);
+        });
+      }
     });
 
     return unsubscribe;

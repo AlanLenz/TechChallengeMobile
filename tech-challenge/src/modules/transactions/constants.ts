@@ -1,7 +1,7 @@
 import { COLLECTIONS } from '@/constants/api';
 import { createQueryKeys } from '@/lib/react-query';
 
-import { CATEGORIES_MAP, type CategoryFilter, type CategoryId, type TransactionType } from './types';
+import { CATEGORIES_MAP, type CategoryFilter, type CategoryId, type TransactionType } from './domain/entities/transaction.entity';
 
 export const TRANSACTIONS_QUERY_KEYS = createQueryKeys('transactions');
 

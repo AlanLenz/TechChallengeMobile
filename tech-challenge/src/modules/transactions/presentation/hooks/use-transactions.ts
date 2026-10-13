@@ -1,7 +1,8 @@
 import { useTransactionsContext } from '@/contexts/transactions-context';
 
 export function useTransactions() {
-  const { transactions, isLoading, error, refreshTransactions } = useTransactionsContext();
+  const { transactions, isLoading, isRefreshing, error, refreshTransactions } =
+    useTransactionsContext();
 
   return {
     data: transactions,
@@ -9,6 +10,7 @@ export function useTransactions() {
     isError: Boolean(error),
     error,
     refetch: refreshTransactions,
+    isRefreshing,
   };
 }
 

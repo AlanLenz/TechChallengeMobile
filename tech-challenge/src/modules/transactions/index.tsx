@@ -2,7 +2,7 @@ export { EditTransactionScreen } from './presentation/components/edit-transactio
 export { NewTransactionScreen } from './presentation/components/new-transaction-screen';
 export { TransactionForm } from './presentation/components/transaction-form';
 export { TransactionsScreen } from './presentation/components/transactions-screen';
-export { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from './constants';
+export { CATEGORY_OPTIONS, TRANSACTIONS_QUERY_KEYS, TRANSACTION_TYPE_OPTIONS } from './constants';
 export { CATEGORIES_MAP, isDepositType } from './domain/entities/transaction.entity';
 export type {
   CategoryId,

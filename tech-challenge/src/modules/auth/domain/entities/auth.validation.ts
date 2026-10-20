@@ -1,17 +1,23 @@
 import { z } from 'zod';
 
-import { emailSchema, passwordSchema } from '@/validations/common.schema';
+import { emailSchema, loginPasswordSchema, passwordSchema } from '@/validations/common.schema';
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: loginPasswordSchema,
 });
 
-export const registerSchema = z.object({
-  name: z.string().min(2, 'Informe seu nome completo.'),
-  email: emailSchema,
-  password: passwordSchema,
-});
+export const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Informe seu nome completo.'),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Confirme sua senha.'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'As senhas não coincidem.',
+    path: ['confirmPassword'],
+  });
 
 export const forgotPasswordSchema = z.object({
   email: emailSchema,

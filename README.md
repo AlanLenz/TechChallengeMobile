@@ -125,17 +125,20 @@ npx expo start
 
 # 🔐 Autenticação
 
-A autenticação da aplicação é realizada utilizando o **Firebase Authentication**.
+A autenticação da aplicação é realizada utilizando o **Firebase Authentication**, combinada com recursos nativos de segurança do dispositivo e boas práticas de arquitetura (OWASP ASVS):
 
 O fluxo contempla:
 
-* Login do usuário;
-* Cadastro de usuário;
-* Manutenção da sessão autenticada;
-* Encerramento da sessão;
-* Proteção das áreas que dependem de autenticação.
-
-O contexto de autenticação centraliza o acesso às informações do usuário e permite que as telas consultem o estado atual da sessão.
+* **Login e Cadastro de Usuário** com validação via **Zod** e **React Hook Form**;
+* **Política de Senhas Fortes**: exigência de no mínimo 8 caracteres contendo ao menos uma letra maiúscula, uma minúscula e um número no cadastro;
+* **Confirmação de Senha**: prevenção contra erros de digitação durante o cadastro (`confirmPassword`);
+* **Alternância de Visibilidade**: controle de exibição de senha (mostrar/ocultar senha com ícone de olho) para melhor usabilidade e precisão no preenchimento;
+* **Sanitização de Dados**: normalização automática de e-mails com remoção de espaços acidentais e conversão para minúsculas (`trim` e `toLowerCase`);
+* **Defesa contra Enumeração de Usuários (OWASP)**: mensagens de erro unificadas ("E-mail ou senha incorretos") impedindo que atacantes descubram se um e-mail já está cadastrado na base;
+* **Persistência Segura de Sessão Criptografada**: persistência configurada via `expo-secure-store` e `getReactNativePersistence`, utilizando armazenamento seguro no Keychain (iOS) e KeyStore (Android) com particionamento transparente de tokens (chunking de 1800 bytes);
+* **Verificação de E-mail**: disparo de e-mail de confirmação no cadastro e acompanhamento de status na tela de Perfil (com opção de reenvio);
+* **Proteção de Rotas com Expo Router**: proteção por camadas através de `Stack.Protected`, garantindo que tanto as abas principais `(tabs)` quanto as rotas modais `(modals)` só possam ser acessadas por usuários autenticados;
+* **Regras de Segurança no Cloud Firestore (`firestore.rules`)**: isolamento rigoroso por usuário (`request.auth.uid == userId`) para subcoleções de transações (`users/{userId}/transactions/{transactionId}`) e perfis, incluindo validação estrita de esquemas, tipos, limites de valor e verificação de caminhos no Storage para anexos.
 
 ---
 

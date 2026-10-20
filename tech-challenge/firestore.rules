@@ -1,0 +1,171 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: users/{userId}
+// Document ID: {userId} (matching Firebase Auth UID)
+// Fields:
+//   - displayName: string (optional, 1-100 chars) - user display name
+//   - name: string (optional, 1-100 chars) - alternative name field
+//   - email: string (optional, valid email format, max 254 chars) - user email
+//   - photoURL / photoUrl: string (optional, valid HTTP/HTTPS URL, max 2000 chars) - avatar URL
+//   - createdAt: timestamp (optional, immutable once set) - document creation time
+//   - updatedAt: timestamp (optional) - document update time
+//
+// Collection: users/{userId}/transactions/{transactionId}
+// Document ID: {transactionId} (auto-generated unique ID)
+// Fields:
+//   - description: string (required, 1-200 chars) - transaction description
+//   - amount: number (required, > 0 and <= 999999999.99) - monetary transaction amount
+//   - date: string (required, ISO 8601 date string, 10-40 chars) - transaction date
+//   - type: string (required, 1-50 chars) - transaction type (e.g. Deposit, Transfer, expense)
+//   - categories_id: number/int (required, integer 1-100) - category identifier
+//   - receipt: map (optional) - receipt attachment metadata containing:
+//       * name: string (required, 1-255 chars) - original filename
+//       * url: string (required, valid HTTP/HTTPS URL, 1-2000 chars) - download URL
+//       * path: string (required, 1-500 chars, scoped to users/{userId}/...) - storage path
+//       * contentType: string (required, 1-100 chars) - file MIME type
+//
+// All other collections and paths are denied by default.
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the authenticated user is the owner of the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate HTTP/HTTPS URL format and reasonable length
+    function isValidUrl(url) {
+      return url is string &&
+        url.size() >= 8 &&
+        url.size() <= 2000 &&
+        (url.matches('^https://.*') || url.matches('^http://.*'));
+    }
+
+    // Validate email format and RFC 5321 length limits
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() >= 3 &&
+        email.size() <= 254 &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // Validate ISO 8601 date string format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS...)
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.size() >= 10 &&
+        dateStr.size() <= 40 &&
+        dateStr.matches('^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}.*)?$');
+    }
+
+    // Validate that a Storage path is scoped strictly to the owner's directory
+    function isScopedPath(path, userId) {
+      return path is string &&
+        path.size() >= 1 &&
+        path.size() <= 500 &&
+        path.matches('^users/' + userId + '/.*');
+    }
+
+    // Verify an immutable field is not altered or removed on update
+    function isImmutableFieldUnchanged(field) {
+      return !(field in resource.data) ||
+        ((field in request.resource.data) && request.resource.data[field] == resource.data[field]);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validate receipt metadata structure and bounds
+    function isValidReceipt(receipt, userId) {
+      let requiredKeys = ['name', 'url', 'path', 'contentType'];
+      return receipt is map &&
+        receipt.keys().hasAll(requiredKeys) &&
+        receipt.keys().hasOnly(requiredKeys) &&
+        receipt.name is string &&
+        receipt.name.size() >= 1 &&
+        receipt.name.size() <= 255 &&
+        isValidUrl(receipt.url) &&
+        isScopedPath(receipt.path, userId) &&
+        receipt.contentType is string &&
+        receipt.contentType.size() >= 1 &&
+        receipt.contentType.size() <= 100;
+    }
+
+    // Validate transaction document structure, constraints, and types
+    function isValidTransaction(data, userId) {
+      let requiredKeys = ['description', 'amount', 'date', 'type', 'categories_id'];
+      let allAllowedKeys = ['description', 'amount', 'date', 'type', 'categories_id', 'receipt'];
+      return data.keys().hasAll(requiredKeys) &&
+        data.keys().hasOnly(allAllowedKeys) &&
+        data.description is string &&
+        data.description.size() >= 1 &&
+        data.description.size() <= 200 &&
+        data.amount is number &&
+        data.amount > 0 &&
+        data.amount <= 999999999.99 &&
+        isValidDateString(data.date) &&
+        data.type is string &&
+        data.type.size() >= 1 &&
+        data.type.size() <= 50 &&
+        (data.categories_id is int || (data.categories_id is number && int(data.categories_id) == data.categories_id)) &&
+        data.categories_id >= 1 &&
+        data.categories_id <= 100 &&
+        (!('receipt' in data) || isValidReceipt(data.receipt, userId));
+    }
+
+    // Validate user profile document structure, constraints, and types
+    function isValidUserProfile(data) {
+      let allowedKeys = ['displayName', 'name', 'email', 'photoURL', 'photoUrl', 'createdAt', 'updatedAt'];
+      return data.keys().hasOnly(allowedKeys) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100)) &&
+        (!('name' in data) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 100)) &&
+        (!('email' in data) || isValidEmail(data.email)) &&
+        (!('photoURL' in data) || isValidUrl(data.photoURL)) &&
+        (!('photoUrl' in data) || isValidUrl(data.photoUrl)) &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // User profile documents
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidUserProfile(request.resource.data) && isImmutableFieldUnchanged('createdAt');
+      allow delete: if isOwner(userId);
+
+      // User transactions subcollection: users/{userId}/transactions/{transactionId}
+      match /transactions/{transactionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTransaction(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidTransaction(request.resource.data, userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Fallback: Deny all other access to undefined collections by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

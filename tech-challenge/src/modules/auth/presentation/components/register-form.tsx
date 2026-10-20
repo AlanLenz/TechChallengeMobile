@@ -24,7 +24,9 @@ export function RegisterForm() {
     defaultValues: AUTH_FORM_DEFAULTS.register,
   });
 
-  const onSubmit = handleSubmit((values) => register.mutate(values));
+  const onSubmit = handleSubmit(({ name, email, password }) => {
+    register.mutate({ name, email, password });
+  });
 
   return (
     <View className="gap-4">
@@ -63,7 +65,23 @@ export function RegisterForm() {
           <Input
             label="Senha"
             secureTextEntry
+            placeholder="Mín. 8 caracteres (maiúscula, minúscula e número)"
             error={errors.password?.message}
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="confirmPassword"
+        render={({ field }) => (
+          <Input
+            label="Confirmar senha"
+            secureTextEntry
+            placeholder="Digite a senha novamente"
+            error={errors.confirmPassword?.message}
             value={field.value}
             onChangeText={field.onChange}
             onBlur={field.onBlur}
@@ -80,4 +98,3 @@ export function RegisterForm() {
     </View>
   );
 }
-

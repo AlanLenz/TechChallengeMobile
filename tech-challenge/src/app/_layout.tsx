@@ -51,6 +51,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={status === 'authenticated'}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
       </Stack.Protected>
       <Stack.Screen name="+not-found" />
     </Stack>

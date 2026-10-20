@@ -16,6 +16,7 @@ import {
   deleteTransactionReceipt,
   getTransactions,
   isDepositType,
+  preloadTransactionReceipts,
   updateTransaction as updateTransactionService,
   uploadTransactionReceipt,
   type Transaction,
@@ -73,6 +74,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       const data = await getTransactions(user.uid);
       setTransactions(data);
       setError(null);
+
+      // Pré-carrega comprovantes das transações recentes para cache nativo
+      void preloadTransactionReceipts(data.slice(0, 10));
     } catch (err) {
       console.error('[TransactionsContext] Erro ao buscar transações:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar transações.');
@@ -96,6 +100,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           setTransactions(data);
           setError(null);
+
+          // Pré-carrega comprovantes das transações recentes para cache nativo
+          void preloadTransactionReceipts(data.slice(0, 10));
         }
       } catch (err) {
         if (isMounted) {
@@ -112,7 +119,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       isMounted = false;
     };
   }, [user]);
-
 
   const createTransaction = useCallback(
     async (input: TransactionFormValues): Promise<string> => {
@@ -167,7 +173,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       setIsRefreshing(false);
     }
   }, [user, reload]);
-
 
   // Cálculos globais de totais e resumo
   const metrics = useMemo(() => {

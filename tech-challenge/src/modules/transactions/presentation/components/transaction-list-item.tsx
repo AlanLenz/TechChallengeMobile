@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 import { ROUTES } from '@/constants/routes';
+import { preloadImage } from '@/services/preload.service';
 import { colors } from '@/theme';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
@@ -20,6 +21,13 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
   return (
     <Pressable
       accessibilityRole="button"
+      onPressIn={() => {
+        // Pré-carrega o comprovante e a tela de edição antecipadamente ao pressionar
+        if (transaction.receipt?.url) {
+          void preloadImage(transaction.receipt.url);
+        }
+        void import('./edit-transaction-screen');
+      }}
       onPress={() => router.push({ pathname: ROUTES.MODALS.EDIT_TRANSACTION, params: { id: transaction.id } })}>
       <Card className="gap-2">
         <View className="flex-row items-center justify-between gap-2">
@@ -47,4 +55,3 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
     </Pressable>
   );
 }
-

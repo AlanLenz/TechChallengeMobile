@@ -1,4 +1,4 @@
-import { BarChart } from 'react-native-gifted-charts';
+import { BarChart } from 'react-native-gifted-charts/dist/BarChart';
 import { View } from 'react-native';
 
 import { Card } from '@/components/ui/card';

@@ -13,6 +13,7 @@ import { TRANSACTIONS_PAGE_SIZE } from '../../constants';
 import { useTransactionFilters } from '../hooks/use-transaction-filters';
 import { useTransactions } from '../hooks/use-transactions';
 import { filterTransactions, paginate } from '../../utils';
+import { preloadTransactionsModule } from '../../index';
 import { TransactionFiltersPanel } from './transaction-filters-panel';
 import { TransactionListItem } from './transaction-list-item';
 
@@ -37,6 +38,9 @@ export function TransactionsScreen() {
       headerRight={
         <Button
           label="+"
+          onPressIn={() => {
+            void preloadTransactionsModule();
+          }}
           onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
           className="px-3 py-1"
         />
@@ -80,4 +84,3 @@ export function TransactionsScreen() {
     </TabScreenLayout>
   );
 }
-

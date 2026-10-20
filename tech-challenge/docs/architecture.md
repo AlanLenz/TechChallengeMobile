@@ -129,6 +129,7 @@ tech-challenge/
     │
     ├── services/                           # camada de serviços cross-cutting
     │   ├── query-client.ts
+    │   ├── preload.service.ts
     │   └── storage.service.ts
     │
     ├── firebase/                           # único ponto de contato com o Firebase SDK
@@ -426,6 +427,8 @@ Exemplo: adicionar a feature "Investimentos".
 - Nenhum `console.log` ou dado sensível (token, saldo, CPF) em logs de produção.
 - Cada PR que adiciona uma feature nova deve vir com seu module completo (não fatiar um module
   entre vários PRs incompletos).
+- Componentes pesados (gráficos) devem usar lazy loading (`lazyWithPreload`) e estratégias de pré-carregamento antecipado em segundo plano e na intenção de navegação (`onPressIn` / `tabPress`).
+- Imagens de mídia (comprovantes e avatar) devem ser pré-carregadas via `preload.service.ts` no cache nativo (`memory-disk`) para renderização instantânea.
 
 ---
 

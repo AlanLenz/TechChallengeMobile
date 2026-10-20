@@ -4,7 +4,13 @@ import { Pressable, View } from 'react-native';
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 import { ROUTES } from '@/constants/routes';
-import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS, isDepositType, type Transaction } from '@/modules/transactions';
+import {
+  CATEGORY_OPTIONS,
+  TRANSACTION_TYPE_OPTIONS,
+  isDepositType,
+  preloadTransactionsModule,
+  type Transaction,
+} from '@/modules/transactions';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
 
@@ -64,7 +70,13 @@ export function RecentTransactionsList({ transactions }: RecentTransactionsListP
         </View>
       )}
 
-      <Pressable onPress={() => router.push(ROUTES.TABS.TRANSACTIONS)} className="items-end pt-1">
+      <Pressable
+        onPressIn={() => {
+          void preloadTransactionsModule();
+        }}
+        onPress={() => router.push(ROUTES.TABS.TRANSACTIONS)}
+        className="items-end pt-1"
+      >
         <Typography variant="small" className="font-semibold text-teal-600 dark:text-teal-400">
           Ver mais →
         </Typography>

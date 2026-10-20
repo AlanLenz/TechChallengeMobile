@@ -6,18 +6,20 @@ import { colors } from '@/theme';
 
 type FloatingActionButtonProps = {
   onPress: () => void;
+  onPressIn?: () => void;
   accessibilityLabel: string;
 };
 
 const SIZE = 56;
 
-export function FloatingActionButton({ onPress, accessibilityLabel }: FloatingActionButtonProps) {
+export function FloatingActionButton({ onPress, onPressIn, accessibilityLabel }: FloatingActionButtonProps) {
   const insets = useSafeAreaInsets();
 
   return (
     <Pressable
       accessibilityRole={'button' as AccessibilityRole}
       accessibilityLabel={accessibilityLabel}
+      onPressIn={onPressIn}
       onPress={onPress}
       className="absolute right-5 items-center justify-center rounded-full bg-primary-500 active:bg-primary-600"
       style={{

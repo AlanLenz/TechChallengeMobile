@@ -1,4 +1,4 @@
-import { PieChart } from 'react-native-gifted-charts';
+import { PieChart } from 'react-native-gifted-charts/dist/PieChart';
 import { View } from 'react-native';
 
 import { Card } from '@/components/ui/card';

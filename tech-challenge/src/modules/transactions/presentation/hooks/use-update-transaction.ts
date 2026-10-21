@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useTransactionsContext } from '@/contexts/transactions-context';
 import type { TransactionReceipt } from '../../domain/entities/transaction.entity';
-import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import { toTransactionInput, type TransactionFormValues } from '../validation/transaction.validation';
 
 type UpdateTransactionArgs = {
   id: string;
@@ -24,7 +24,7 @@ export function useUpdateTransaction() {
     setIsPending(true);
     setError(null);
     try {
-      await updateTransaction(id, input, previousReceipt);
+      await updateTransaction(id, toTransactionInput(input), previousReceipt);
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Não foi possível salvar a transação.');
       setError(e);

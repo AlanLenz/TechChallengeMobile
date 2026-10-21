@@ -10,25 +10,16 @@ import {
 
 import { useAuthContext } from '@/contexts/auth-context';
 import {
-  CATEGORY_OPTIONS,
-  createTransaction as createTransactionService,
-  deleteTransaction as deleteTransactionService,
-  deleteTransactionReceipt,
-  getTransactions,
-  isDepositType,
+  computeTransactionMetrics,
   preloadTransactionReceipts,
-  updateTransaction as updateTransactionService,
-  uploadTransactionReceipt,
+  transactionUseCases,
+  type CategoryBreakdownItem,
   type Transaction,
-  type TransactionFormValues,
+  type TransactionInput,
   type TransactionReceipt,
 } from '@/modules/transactions';
 
-export type CategoryBreakdownItem = {
-  categoryId: number;
-  label: string;
-  total: number;
-};
+export type { CategoryBreakdownItem };
 
 export type TransactionsContextValue = {
   transactions: Transaction[];
@@ -46,10 +37,10 @@ export type TransactionsContextValue = {
   categoryBreakdown: CategoryBreakdownItem[];
 
   // Ações CRUD
-  createTransaction: (input: TransactionFormValues) => Promise<string>;
+  createTransaction: (input: TransactionInput) => Promise<string>;
   updateTransaction: (
     id: string,
-    input: TransactionFormValues,
+    input: TransactionInput,
     previousReceipt?: TransactionReceipt
   ) => Promise<void>;
   deleteTransaction: (id: string, receiptPath?: string) => Promise<void>;
@@ -71,7 +62,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const data = await getTransactions(user.uid);
+      const data = await transactionUseCases.getTransactions.execute(user.uid);
       setTransactions(data);
       setError(null);
 
@@ -96,7 +87,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const data = await getTransactions(user.uid);
+        const data = await transactionUseCases.getTransactions.execute(user.uid);
         if (isMounted) {
           setTransactions(data);
           setError(null);
@@ -121,13 +112,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const createTransaction = useCallback(
-    async (input: TransactionFormValues): Promise<string> => {
+    async (input: TransactionInput): Promise<string> => {
       if (!user) throw new Error('Usuário não autenticado.');
-      const id = await createTransactionService(user.uid, input);
-      if (input.receiptFile) {
-        const receipt = await uploadTransactionReceipt(user.uid, id, input.receiptFile);
-        await updateTransactionService(user.uid, id, input, receipt, false);
-      }
+      const id = await transactionUseCases.createTransaction.execute(user.uid, input);
       await reload();
       return id;
     },
@@ -137,19 +124,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const updateTransaction = useCallback(
     async (
       id: string,
-      input: TransactionFormValues,
+      input: TransactionInput,
       previousReceipt?: TransactionReceipt
     ): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
-      const receipt = input.receiptFile
-        ? await uploadTransactionReceipt(user.uid, id, input.receiptFile)
-        : input.receipt;
-
-      await updateTransactionService(user.uid, id, input, receipt, Boolean(previousReceipt));
-
-      if (previousReceipt && previousReceipt.path !== receipt?.path) {
-        await deleteTransactionReceipt(previousReceipt.path);
-      }
+      await transactionUseCases.updateTransaction.execute(user.uid, id, input, previousReceipt);
       await reload();
     },
     [user, reload]
@@ -158,7 +137,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = useCallback(
     async (id: string, receiptPath?: string): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
-      await deleteTransactionService(user.uid, id, receiptPath);
+      await transactionUseCases.deleteTransaction.execute(user.uid, id, receiptPath);
       await reload();
     },
     [user, reload]
@@ -174,47 +153,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
   }, [user, reload]);
 
-  // Cálculos globais de totais e resumo
-  const metrics = useMemo(() => {
-    const deposits = transactions.filter((t) => isDepositType(t.type));
-    const expenses = transactions.filter((t) => !isDepositType(t.type));
-
-    const totalIncome = deposits.reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-    const balance = totalIncome - totalExpenses;
-
-    const biggestExpense = expenses.length
-      ? Math.max(...expenses.map((t) => t.amount))
-      : 0;
-
-    const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
-    const recentTransactions = sorted.slice(0, 5);
-
-    const categoryMap = new Map<number, number>();
-    for (const t of expenses) {
-      if (t.categories_id === undefined) continue;
-      const prev = categoryMap.get(t.categories_id) ?? 0;
-      categoryMap.set(t.categories_id, prev + t.amount);
-    }
-
-    const categoryBreakdown: CategoryBreakdownItem[] = Array.from(categoryMap.entries()).map(
-      ([id, total]) => ({
-        categoryId: id,
-        label: CATEGORY_OPTIONS.find((c) => c.value === id)?.label ?? 'Outros',
-        total,
-      })
-    );
-
-    return {
-      balance,
-      totalIncome,
-      totalExpenses,
-      biggestExpense,
-      transactionCount: transactions.length,
-      recentTransactions,
-      categoryBreakdown,
-    };
-  }, [transactions]);
+  // Cálculos globais de totais e resumo (regra de negócio no domínio)
+  const metrics = useMemo(() => computeTransactionMetrics(transactions), [transactions]);
 
   const value = useMemo<TransactionsContextValue>(
     () => ({

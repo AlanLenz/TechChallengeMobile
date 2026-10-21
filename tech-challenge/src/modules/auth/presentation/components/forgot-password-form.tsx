@@ -10,7 +10,7 @@ import { Typography } from '@/components/ui/typography';
 
 import { AUTH_FORM_DEFAULTS } from '../../constants';
 import { useForgotPassword } from '../hooks/use-forgot-password';
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../../domain/entities/auth.validation';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../validation/auth.validation';
 
 export function ForgotPasswordForm() {
   const router = useRouter();

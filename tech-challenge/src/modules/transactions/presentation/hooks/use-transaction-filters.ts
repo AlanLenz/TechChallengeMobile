@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import type { TransactionFilters } from '../../domain/entities/transaction.entity';
-import { validateDateRange } from '../../domain/entities/transaction.validation';
+import { validateDateRange } from '../validation/transaction.validation';
 
 const INITIAL_FILTERS: TransactionFilters = {
   description: '',

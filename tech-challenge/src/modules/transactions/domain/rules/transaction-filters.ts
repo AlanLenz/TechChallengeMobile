@@ -1,0 +1,28 @@
+import { endOfDay, startOfDay } from 'date-fns';
+
+import { isDepositType, type Transaction, type TransactionFilters } from '../entities/transaction.entity';
+
+/** Filtro client-side: a listagem já carrega todas as transações do usuário (não há
+ * paginação/filtro no lado do Firestore hoje), então combinar os filtros em memória é o que
+ * mantém a implementação consistente com o padrão atual. */
+export function filterTransactions(transactions: Transaction[], filters: TransactionFilters): Transaction[] {
+  const description = filters.description.trim().toLowerCase();
+  const start = filters.startDate ? startOfDay(new Date(filters.startDate)) : undefined;
+  const end = filters.endDate ? endOfDay(new Date(filters.endDate)) : undefined;
+
+  return transactions.filter((transaction) => {
+    if (description && !transaction.description.toLowerCase().includes(description)) return false;
+
+    const transactionDate = new Date(transaction.date);
+    if (start && transactionDate < start) return false;
+    if (end && transactionDate > end) return false;
+
+    if (filters.type !== 'all' && isDepositType(transaction.type) !== isDepositType(filters.type)) return false;
+    if (filters.categoryId !== 'all' && transaction.categories_id !== filters.categoryId) return false;
+
+    if (filters.attachment === 'with' && !transaction.receipt) return false;
+    if (filters.attachment === 'without' && transaction.receipt) return false;
+
+    return true;
+  });
+}

@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/header';
 import { ScreenContainer } from '@/components/layout/screen-container';
 
 import { useCreateTransaction } from '../hooks/use-create-transaction';
-import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import type { TransactionFormValues } from '../validation/transaction.validation';
 import { TransactionForm } from './transaction-form';
 
 export function NewTransactionScreen() {

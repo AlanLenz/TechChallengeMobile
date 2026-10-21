@@ -1,9 +1,8 @@
 import { z } from 'zod';
 
 import { parseCurrencyToNumber } from '@/utils/mask';
-import { RECEIPT_MAX_SIZE_BYTES } from '../../constants';
-import type { TransactionReceipt } from './transaction.entity';
-import { isAllowedReceiptType, type ReceiptFileInput } from '../../utils';
+import type { TransactionInput, TransactionReceipt } from '../../domain/entities/transaction.entity';
+import { RECEIPT_MAX_SIZE_BYTES, isAllowedReceiptType } from '../../domain/rules/receipt.rules';
 
 /** Arquivo recém-selecionado no picker, ainda não enviado ao Storage. */
 const receiptFileSchema = z
@@ -84,4 +83,15 @@ export function validateDateRange(startDate?: string, endDate?: string): string 
   return null;
 }
 
-export type { ReceiptFileInput };
+/** Converte os valores do formulário (valor mascarado em string) no input do domínio. */
+export function toTransactionInput(values: TransactionFormValues): TransactionInput {
+  return {
+    type: values.type,
+    description: values.description,
+    amount: parseCurrencyToNumber(values.amount),
+    date: values.date,
+    categoriesId: values.categoriesId as TransactionInput['categoriesId'],
+    receiptFile: values.receiptFile,
+    receipt: values.receipt,
+  };
+}

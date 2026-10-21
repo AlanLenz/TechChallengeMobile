@@ -12,7 +12,7 @@ import { Typography } from '@/components/ui/typography';
 
 import { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from '../../constants';
 import type { CategoryId } from '../../domain/entities/transaction.entity';
-import { transactionFormSchema, type TransactionFormValues } from '../../domain/entities/transaction.validation';
+import { transactionFormSchema, type TransactionFormValues } from '../validation/transaction.validation';
 import { maskCurrency } from '@/utils/mask';
 import { ReceiptField } from './receipt-field';
 

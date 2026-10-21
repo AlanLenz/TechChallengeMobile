@@ -1,25 +1,50 @@
-import { getAuthErrorMessage, resetPassword, signIn, signUp } from '@/firebase/auth';
+import {
+  getAuthErrorMessage,
+  reloadCurrentUser,
+  resetPassword,
+  sendVerificationEmail,
+  signIn,
+  signOut,
+  signUp,
+  subscribeToAuthChanges,
+  type User,
+} from '@/firebase/auth';
 
-export async function login(email: string, password: string) {
+import type { AuthUser } from '../../domain/entities/auth.entity';
+import type { IAuthRepository } from '../../domain/repositories/auth.repository';
+
+function toAuthUser(user: User | null): AuthUser | null {
+  if (!user) return null;
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    emailVerified: user.emailVerified,
+  };
+}
+
+async function withDomainError<T>(operation: () => Promise<T>): Promise<T> {
   try {
-    return await signIn(email, password);
+    return await operation();
   } catch (error) {
     throw new Error(getAuthErrorMessage(error));
   }
 }
 
-export async function register(name: string, email: string, password: string) {
-  try {
-    return await signUp(name, email, password);
-  } catch (error) {
-    throw new Error(getAuthErrorMessage(error));
-  }
-}
-
-export async function requestPasswordReset(email: string) {
-  try {
-    await resetPassword(email);
-  } catch (error) {
-    throw new Error(getAuthErrorMessage(error));
-  }
-}
+export const firebaseAuthRepository: IAuthRepository = {
+  signIn: (email, password) =>
+    withDomainError(async () => {
+      await signIn(email, password);
+    }),
+  signUp: (name, email, password) =>
+    withDomainError(async () => {
+      await signUp(name, email, password);
+    }),
+  signOut: () => withDomainError(signOut),
+  requestPasswordReset: (email) => withDomainError(() => resetPassword(email)),
+  sendVerificationEmail: () => withDomainError(sendVerificationEmail),
+  reloadCurrentUser: async () => toAuthUser(await reloadCurrentUser()),
+  subscribeToAuthChanges: (callback) =>
+    subscribeToAuthChanges((user) => callback(toAuthUser(user))),
+};

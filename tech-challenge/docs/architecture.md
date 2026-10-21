@@ -570,3 +570,33 @@ componentes e que muda com pouca frequência. Estado de servidor (o que vem do F
 vai para Context — isso é responsabilidade do React Query. Estado local (`useState`/
 `useReducer`) é o padrão para qualquer coisa que só uma tela ou um componente usa; só sobe para
 Context quando dois ou mais lugares desconectados da árvore precisam do mesmo dado.
+
+---
+
+## 16. Clean Architecture dentro de cada module
+
+Cada `src/modules/<feature>` segue a regra de dependência — as setas apontam sempre para dentro:
+
+```
+presentation ──► application ──► domain ◄── infrastructure
+      │                                          ▲
+      └────────── container.ts (composition root) ┘
+```
+
+| Camada | Pasta | O que tem | Pode importar |
+|---|---|---|---|
+| Domain | `domain/entities`, `domain/rules`, `domain/repositories` | Entidades, regras puras (filtros, métricas, regras de comprovante) e **ports** (`I*Repository`) | só o próprio domain |
+| Application | `application/*.use-case.ts` | Um use case por intenção do usuário; orquestra ports (ex.: criar transação + enviar comprovante) | domain |
+| Infrastructure | `infrastructure/firebase` | Implementa os ports com Firebase (Firestore/Auth/Storage), converte tipos do SDK em entidades | domain, `@/firebase` |
+| Presentation | `presentation/{components,hooks,validation}` | Telas, hooks, schemas zod de formulário e mapeamento form → input do domínio | domain, application, `container` |
+| Composition root | `container.ts` | Instancia os use cases injetando a implementação concreta de cada port | tudo |
+
+Pontos-chave:
+
+- **Troca de backend** = escrever outro `infrastructure/<provedor>` e mudar uma linha no `container.ts`.
+- `contexts/` guarda só estado de UI/sessão e chama use cases (`authUseCases`, `transactionUseCases`); não conhece Firebase.
+- O tipo `AuthUser` (domain) substitui o `User` do SDK na UI.
+- Regras de formulário (valor mascarado em string, zod) ficam em `presentation/validation`; o use case recebe `TransactionInput` já normalizado.
+- A regra é imposta pelo ESLint (`no-restricted-imports` em `eslint.config.js`): domain/application não importam infra, Firebase nem React; presentation não importa `infrastructure/` nem o SDK.
+
+Nova funcionalidade: entidade + port em `domain` → use case em `application` → implementação em `infrastructure` → registrar em `container.ts` → consumir na `presentation`.

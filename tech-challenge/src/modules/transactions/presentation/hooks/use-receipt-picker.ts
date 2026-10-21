@@ -1,8 +1,12 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useCallback, useState } from 'react';
 
-import { RECEIPT_ALLOWED_MIME_TYPES, RECEIPT_MAX_SIZE_BYTES } from '../../constants';
-import { isAllowedReceiptType, type ReceiptFileInput } from '../../utils';
+import type { ReceiptFileInput } from '../../domain/entities/transaction.entity';
+import {
+  RECEIPT_ALLOWED_MIME_TYPES,
+  RECEIPT_MAX_SIZE_BYTES,
+  isAllowedReceiptType,
+} from '../../domain/rules/receipt.rules';
 
 type UseReceiptPickerParams = {
   onPick: (file: ReceiptFileInput) => void;

@@ -1,5 +1,3 @@
-import type { WithId } from '@/types/api';
-
 export type TransactionType = 'Deposit' | 'Transfer';
 
 export function isDepositType(type?: string): boolean {
@@ -30,14 +28,36 @@ export type TransactionReceipt = {
   contentType: string;
 };
 
-export type Transaction = WithId<{
+export type Transaction = {
+  id: string;
   description: string;
   amount: number;
   date: string;
   type: TransactionType;
   categories_id?: CategoryId;
   receipt?: TransactionReceipt;
-}>;
+};
+
+/** Arquivo selecionado pelo picker, antes do upload — ainda não enviado ao Storage. */
+export type ReceiptFileInput = {
+  uri: string;
+  name: string;
+  size?: number;
+  mimeType?: string;
+};
+
+/** Dados necessários para criar ou editar uma transação (já normalizados, sem máscara de UI). */
+export type TransactionInput = {
+  type: TransactionType;
+  description: string;
+  amount: number;
+  date: string;
+  categoriesId: CategoryId;
+  /** Novo arquivo a enviar (opcional — comprovante não é obrigatório). */
+  receiptFile?: ReceiptFileInput;
+  /** Comprovante já enviado (preenchido só na edição). */
+  receipt?: TransactionReceipt;
+};
 
 /** Sentinela "all" representa "sem filtro" nos selects de filtro — não é um valor de domínio. */
 export type TransactionTypeFilter = TransactionType | 'all';

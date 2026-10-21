@@ -7,24 +7,19 @@ export { TransactionForm } from './presentation/components/transaction-form';
 export { TransactionsScreen } from './presentation/components/transactions-screen';
 export { CATEGORY_OPTIONS, TRANSACTION_TYPE_OPTIONS } from './constants';
 export { CATEGORIES_MAP, isDepositType } from './domain/entities/transaction.entity';
+export { computeTransactionMetrics } from './domain/rules/transaction-metrics';
+export type { CategoryBreakdownItem } from './domain/rules/transaction-metrics';
 export type {
   CategoryId,
   Transaction,
   TransactionFilters,
+  TransactionInput,
   TransactionReceipt,
   TransactionType,
 } from './domain/entities/transaction.entity';
-export { transactionFormSchema, validateDateRange } from './domain/entities/transaction.validation';
-export type { TransactionFormValues } from './domain/entities/transaction.validation';
-export {
-  createTransaction,
-  deleteTransaction,
-  deleteTransactionReceipt,
-  getTransaction,
-  getTransactions,
-  updateTransaction,
-  uploadTransactionReceipt,
-} from './infrastructure/firebase/firebase-transaction.repository';
+export { transactionFormSchema, validateDateRange } from './presentation/validation/transaction.validation';
+export type { TransactionFormValues } from './presentation/validation/transaction.validation';
+export { transactionUseCases } from './container';
 
 /**
  * Pré-carrega os módulos de telas e formulários de transações antecipadamente para navegação fluida.

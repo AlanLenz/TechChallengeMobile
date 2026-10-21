@@ -9,26 +9,37 @@ import {
 } from '@/firebase/firestore';
 import { deleteFile, getFileUrl, getStorageErrorMessage, uploadFile } from '@/firebase/storage';
 
-import { getReceiptStoragePath } from '../../constants';
-import type { CategoryId, Transaction, TransactionReceipt } from '../../domain/entities/transaction.entity';
-import { randomFileSuffix, resolveReceiptMimeType, storedFileExtension, type ReceiptFileInput } from '../../utils';
-import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
-import { parseCurrencyToNumber } from '@/utils/mask';
-
+import type {
+  ReceiptFileInput,
+  Transaction,
+  TransactionInput,
+  TransactionReceipt,
+} from '../../domain/entities/transaction.entity';
 import type { ITransactionRepository } from '../../domain/repositories/transaction.repository';
+import { resolveReceiptMimeType, storedFileExtension } from '../../domain/rules/receipt.rules';
+
+/** Caminho no Storage: espelha o modelo per-user do Firestore (`users/{uid}/transactions/...`). */
+function getReceiptStoragePath(userId: string, transactionId: string, fileName: string): string {
+  return `users/${userId}/${COLLECTIONS.TRANSACTIONS}/${transactionId}/receipts/${fileName}`;
+}
+
+/** Sufixo aleatório curto para evitar colisão de nomes no Storage (sem dependência de uuid). */
+function randomFileSuffix(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
 
 function transactionsPath(userId: string): string {
   return `users/${userId}/${COLLECTIONS.TRANSACTIONS}`;
 }
 
 /** Campos de domínio da transação — sem `receiptFile`/`receipt`, tratados à parte. */
-function toDocumentData(input: TransactionFormValues) {
+function toDocumentData(input: TransactionInput) {
   return {
     description: input.description.trim(),
-    amount: parseCurrencyToNumber(input.amount),
+    amount: input.amount,
     date: input.date,
     type: input.type,
-    categories_id: input.categoriesId as CategoryId,
+    categories_id: input.categoriesId,
   };
 }
 
@@ -40,14 +51,14 @@ export async function getTransaction(userId: string, id: string): Promise<Transa
   return getDocument<Transaction>(transactionsPath(userId), id);
 }
 
-export async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
+export async function createTransaction(userId: string, input: TransactionInput): Promise<string> {
   return addDocument(transactionsPath(userId), toDocumentData(input));
 }
 
 export async function updateTransaction(
   userId: string,
   id: string,
-  input: TransactionFormValues,
+  input: TransactionInput,
   receipt: TransactionReceipt | undefined,
   hadReceipt: boolean
 ): Promise<void> {
@@ -63,11 +74,7 @@ export async function updateTransaction(
   return updateDocument(transactionsPath(userId), id, data);
 }
 
-export async function deleteTransaction(userId: string, id: string, receiptPath?: string): Promise<void> {
-  if (receiptPath) {
-    await deleteTransactionReceipt(receiptPath);
-  }
-
+export async function deleteTransaction(userId: string, id: string): Promise<void> {
   return deleteDocument(transactionsPath(userId), id);
 }
 

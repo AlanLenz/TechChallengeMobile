@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useTransactionsContext } from '@/contexts/transactions-context';
-import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import { toTransactionInput, type TransactionFormValues } from '../validation/transaction.validation';
 
 export function useCreateTransaction() {
   const { createTransaction } = useTransactionsContext();
@@ -12,7 +12,7 @@ export function useCreateTransaction() {
     setIsPending(true);
     setError(null);
     try {
-      return await createTransaction(input);
+      return await createTransaction(toTransactionInput(input));
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Não foi possível salvar a transação.');
       setError(e);

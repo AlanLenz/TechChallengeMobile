@@ -10,7 +10,7 @@ import { ROUTES } from '@/constants/routes';
 
 import { AUTH_FORM_DEFAULTS } from '../../constants';
 import { useRegister } from '../hooks/use-register';
-import { registerSchema, type RegisterFormValues } from '../../domain/entities/auth.validation';
+import { registerSchema, type RegisterFormValues } from '../validation/auth.validation';
 
 export function RegisterForm() {
   const router = useRouter();

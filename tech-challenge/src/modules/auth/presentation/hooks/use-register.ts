@@ -1,12 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { register } from '../../infrastructure/firebase/firebase-auth.repository';
+import { authUseCases } from '../../container';
 import type { RegisterInput } from '../../domain/entities/auth.entity';
 
 export function useRegister() {
   return useMutation({
-    mutationFn: ({ name, email, password }: RegisterInput) => register(name, email, password),
+    mutationFn: (input: RegisterInput) => authUseCases.register.execute(input),
   });
 }
-
-

@@ -10,7 +10,7 @@ import { useDeleteTransaction } from '../hooks/use-delete-transaction';
 import { useTransaction } from '../hooks/use-transaction';
 import { useUpdateTransaction } from '../hooks/use-update-transaction';
 import { isDepositType } from '../../domain/entities/transaction.entity';
-import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import type { TransactionFormValues } from '../validation/transaction.validation';
 import { maskCurrency } from '@/utils/mask';
 import { TransactionForm } from './transaction-form';
 

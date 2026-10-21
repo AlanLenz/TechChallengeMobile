@@ -8,8 +8,8 @@ import { Typography } from '@/components/ui/typography';
 import { colors } from '@/theme';
 
 import { useReceiptPicker } from '../hooks/use-receipt-picker';
-import type { TransactionReceipt } from '../../domain/entities/transaction.entity';
-import { formatFileSize, type ReceiptFileInput } from '../../utils';
+import type { ReceiptFileInput, TransactionReceipt } from '../../domain/entities/transaction.entity';
+import { formatFileSize } from '../../utils';
 
 type ReceiptFieldProps = {
   /** Arquivo recém-selecionado, ainda não enviado. */

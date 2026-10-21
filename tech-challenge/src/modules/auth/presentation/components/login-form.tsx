@@ -10,7 +10,7 @@ import { ROUTES } from '@/constants/routes';
 
 import { AUTH_FORM_DEFAULTS } from '../../constants';
 import { useLogin } from '../hooks/use-login';
-import { loginSchema, type LoginFormValues } from '../../domain/entities/auth.validation';
+import { loginSchema, type LoginFormValues } from '../validation/auth.validation';
 
 export function LoginForm() {
   const router = useRouter();

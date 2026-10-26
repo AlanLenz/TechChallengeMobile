@@ -125,17 +125,20 @@ npx expo start
 
 # 🔐 Autenticação
 
-A autenticação da aplicação é realizada utilizando o **Firebase Authentication**.
+A autenticação da aplicação é realizada utilizando o **Firebase Authentication**, combinada com recursos nativos de segurança do dispositivo e boas práticas de arquitetura (OWASP ASVS):
 
 O fluxo contempla:
 
-* Login do usuário;
-* Cadastro de usuário;
-* Manutenção da sessão autenticada;
-* Encerramento da sessão;
-* Proteção das áreas que dependem de autenticação.
-
-O contexto de autenticação centraliza o acesso às informações do usuário e permite que as telas consultem o estado atual da sessão.
+* **Login e Cadastro de Usuário** com validação via **Zod** e **React Hook Form**;
+* **Política de Senhas Fortes**: exigência de no mínimo 8 caracteres contendo ao menos uma letra maiúscula, uma minúscula e um número no cadastro;
+* **Confirmação de Senha**: prevenção contra erros de digitação durante o cadastro (`confirmPassword`);
+* **Alternância de Visibilidade**: controle de exibição de senha (mostrar/ocultar senha com ícone de olho) para melhor usabilidade e precisão no preenchimento;
+* **Sanitização de Dados**: normalização automática de e-mails com remoção de espaços acidentais e conversão para minúsculas (`trim` e `toLowerCase`);
+* **Defesa contra Enumeração de Usuários (OWASP)**: mensagens de erro unificadas ("E-mail ou senha incorretos") impedindo que atacantes descubram se um e-mail já está cadastrado na base;
+* **Persistência Segura de Sessão Criptografada**: persistência configurada via `expo-secure-store` e `getReactNativePersistence`, utilizando armazenamento seguro no Keychain (iOS) e KeyStore (Android) com particionamento transparente de tokens (chunking de 1800 bytes);
+* **Verificação de E-mail**: disparo de e-mail de confirmação no cadastro e acompanhamento de status na tela de Perfil (com opção de reenvio);
+* **Proteção de Rotas com Expo Router**: proteção por camadas através de `Stack.Protected`, garantindo que tanto as abas principais `(tabs)` quanto as rotas modais `(modals)` só possam ser acessadas por usuários autenticados;
+* **Regras de Segurança no Cloud Firestore (`firestore.rules`)**: isolamento rigoroso por usuário (`request.auth.uid == userId`) para subcoleções de transações (`users/{userId}/transactions/{transactionId}`) e perfis, incluindo validação estrita de esquemas, tipos, limites de valor e verificação de caminhos no Storage para anexos.
 
 ---
 
@@ -305,7 +308,7 @@ A aplicação também possui uma estrutura de tema para centralizar valores util
 
 ---
 
-# 🔄 Carregamento e estados
+# 🔄 Carregamento, Lazy Loading e Pré-carregamento
 
 O Dashboard possui tratamento para diferentes estados da requisição dos dados.
 
@@ -320,6 +323,32 @@ Loading
 ### Dados carregados
 
 Quando os dados são carregados corretamente, o Dashboard apresenta os cards, gráficos e transações recentes.
+
+### ⚡ Lazy Loading e Estratégias de Pré-carregamento (Preloading)
+
+Para otimizar o tempo de inicialização e a fluidez da navegação, a aplicação combina **Lazy Loading** com **estratégias ativas de pré-carregamento**:
+
+1. **Lazy Loading com `lazyWithPreload` (`src/utils/lazy-with-preload.ts`)**:
+   - Os componentes de gráficos (`CategoryChart` e `IncomeExpenseChart`), que dependem de bibliotecas com maior peso (`react-native-gifted-charts`), são carregados sob demanda através do utilitário `lazyWithPreload`.
+   - Isso desacopla o carregamento inicial da tela principal do bundle de renderização dos gráficos.
+
+2. **Pré-carregamento Antecipado de Componentes (`preloadHomeCharts`)**:
+   - Assim que o `HomeScreen` ou o layout de abas é montado, a função `preloadHomeCharts()` inicia a importação dos módulos em segundo plano.
+   - Quando as métricas financeiras concluem a busca ou o usuário rola a tela até os gráficos, os componentes já estão carregados na memória do JavaScript, eliminando qualquer atraso visual ou spinner de Suspense.
+
+3. **Pré-carregamento por Intenção de Navegação (`onPressIn`)**:
+   - Em botões e itens navegáveis (como o Floating Action Button `+` para criação de transações e cada item na lista de transações), o evento `onPressIn` (toque inicial/touch-down) dispara imediatamente o pré-carregamento do módulo e dos recursos da tela de destino antes mesmo do disparo de `onPress` (liberação do toque).
+   - Esse ganho de 100ms a 300ms de antecipação torna a abertura de modais e telas instantânea.
+
+4. **Pré-carregamento de Imagens e Comprovantes (`src/services/preload.service.ts`)**:
+   - O serviço centraliza o pré-carregamento de mídia através de `Image.prefetch` do `expo-image` com política `memory-disk`.
+   - O avatar do usuário autenticado e as imagens de comprovantes anexados às últimas transações são pré-carregados automaticamente no cache nativo do dispositivo logo após a listagem ser obtida do Firestore.
+
+5. **Pré-carregamento Cooperativo em Tempo Ocioso (`preloadIdle`)**:
+   - No `TabsLayout` (`src/app/(tabs)/_layout.tsx`), as abas secundárias (`Transações` e `Perfil`) têm seus módulos pré-carregados cooperativamente durante o tempo ocioso da thread principal, garantindo transições suaves a 60 FPS.
+
+6. **Listeners de Navegação nas Abas (`tabPress`)**:
+   - As abas do Expo Router contam com listeners no evento `tabPress` para antecipar o carregamento dos módulos de cada rota antes da conclusão da transição visual.
 
 ---
 

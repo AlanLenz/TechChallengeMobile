@@ -17,6 +17,7 @@ import {
   deleteTransactionReceipt,
   getTransactions,
   isDepositType,
+  preloadTransactionReceipts,
   updateTransaction as updateTransactionService,
   uploadTransactionReceipt,
   type Transaction,
@@ -60,33 +61,65 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
-  const queryClient = useQueryClient();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const transactionsQuery = useQuery({
-    queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
-    queryFn: async () => {
-      if (!user) return [] as Transaction[];
-      return getTransactions(user.uid);
-    },
-    enabled: Boolean(user),
-    staleTime: 30_000,
-  });
+  const reload = useCallback(async () => {
+    if (!user) {
+      setTransactions([]);
+      return;
+    }
+    try {
+      const data = await getTransactions(user.uid);
+      setTransactions(data);
+      setError(null);
 
-  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
-  const isLoading = transactionsQuery.isLoading;
-  const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
-  const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
+      // Pré-carrega comprovantes das transações recentes para cache nativo
+      void preloadTransactionReceipts(data.slice(0, 10));
+    } catch (err) {
+      console.error('[TransactionsContext] Erro ao buscar transações:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao carregar transações.');
+    }
+  }, [user]);
 
-  const invalidateTransactionQueries = useCallback(async () => {
-    if (!user) return;
+  useEffect(() => {
+    let isMounted = true;
 
-    const homeSummaryKey = ['home-summary', 'list', user.uid] as const;
+    Promise.resolve().then(async () => {
+      if (!isMounted) return;
 
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid) }),
-      queryClient.invalidateQueries({ queryKey: homeSummaryKey }),
-    ]);
-  }, [queryClient, user]);
+      if (!user) {
+        setTransactions([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getTransactions(user.uid);
+        if (isMounted) {
+          setTransactions(data);
+          setError(null);
+
+          // Pré-carrega comprovantes das transações recentes para cache nativo
+          void preloadTransactionReceipts(data.slice(0, 10));
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar transações.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   const createTransaction = useCallback(
     async (input: TransactionFormValues): Promise<string> => {
@@ -140,9 +173,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   const refreshTransactions = useCallback(async () => {
     if (!user) return;
-    await queryClient.refetchQueries({ queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid) });
-  }, [queryClient, user]);
+    setIsRefreshing(true);
+    try {
+      await reload();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [user, reload]);
 
+  // Cálculos globais de totais e resumo
   const metrics = useMemo(() => {
     const deposits = transactions.filter((t) => isDepositType(t.type));
     const expenses = transactions.filter((t) => !isDepositType(t.type));

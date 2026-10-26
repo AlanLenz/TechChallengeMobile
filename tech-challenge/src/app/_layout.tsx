@@ -31,6 +31,16 @@ function RootNavigator() {
     }
   }, [status, loaded]);
 
+  // Pré-compilação em background dos gráficos assim que a autenticação é resolvida,
+  // antes mesmo de a transição para as abas ser concluída.
+  useEffect(() => {
+    if (status === 'authenticated') {
+      import('@/modules/home').then((m) => {
+        void m.preloadHomeCharts();
+      });
+    }
+  }, [status]);
+
   // Mantém a splash nativa visível (ainda não escondida) enquanto o Firebase resolve a sessão.
   if (status === 'loading' || !loaded) return null;
 
@@ -41,6 +51,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={status === 'authenticated'}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
       </Stack.Protected>
       <Stack.Screen name="+not-found" />
     </Stack>

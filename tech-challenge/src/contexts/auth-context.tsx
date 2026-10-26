@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { isEnvValid } from '@/config/env';
 import {
   reloadCurrentUser,
@@ -28,7 +29,9 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
+  const activeUserId = useRef<string | null>(null);
   // Sem credenciais reais ainda (.env não preenchido): não há sessão para restaurar — parte
   // direto como não autenticado em vez de deixar o app travado em "loading" para sempre.
   const [status, setStatus] = useState<AuthStatus>(isEnvValid ? 'loading' : 'unauthenticated');
@@ -37,6 +40,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isEnvValid) return;
 
     const unsubscribe = subscribeToAuthChanges((nextUser) => {
+      const previousUserId = activeUserId.current;
+      const nextUserId = nextUser?.uid ?? null;
+
+      if (previousUserId && previousUserId !== nextUserId) {
+        queryClient.removeQueries({
+          predicate: ({ queryKey }) => queryKey.includes(previousUserId),
+        });
+      }
+
+      activeUserId.current = nextUserId;
       setUser(nextUser);
       setStatus(nextUser ? 'authenticated' : 'unauthenticated');
 
@@ -49,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

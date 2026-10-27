@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
@@ -10,27 +9,21 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthContext } from '@/contexts/auth-context';
-import {
-  CATEGORY_OPTIONS,
-  TRANSACTIONS_QUERY_KEYS,
-  createTransaction as createTransactionService,
-  deleteTransaction as deleteTransactionService,
-  deleteTransactionReceipt,
-  getTransactions,
-  isDepositType,
-  preloadTransactionReceipts,
-  updateTransaction as updateTransactionService,
-  uploadTransactionReceipt,
-  type Transaction,
-  type TransactionFormValues,
-  type TransactionReceipt,
-} from '@/modules/transactions';
 
-export type CategoryBreakdownItem = {
-  categoryId: number;
-  label: string;
-  total: number;
-};
+import {
+  createTransactionWithReceipt,
+  updateTransactionWithReceipt,
+} from '../../application/transaction.use-cases';
+import { TRANSACTIONS_QUERY_KEYS } from '../../constants';
+import { transactionRepository } from '../../container';
+import type { Transaction, TransactionReceipt } from '../../domain/entities/transaction.entity';
+import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import {
+  calculateTransactionMetrics,
+  type CategoryBreakdownItem,
+} from '../../domain/services/transaction-metrics.service';
+
+export type { CategoryBreakdownItem };
 
 export type TransactionsContextValue = {
   transactions: Transaction[];
@@ -66,7 +59,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   const transactionsQuery = useQuery({
     queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
-    queryFn: () => (user ? getTransactions(user.uid) : Promise.resolve([])),
+    queryFn: () => (user ? transactionRepository.getTransactions(user.uid) : Promise.resolve([])),
     enabled: Boolean(user),
     staleTime: 30_000,
   });
@@ -79,16 +72,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
   const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
 
-  useEffect(() => {
-    if (transactionsQuery.data) {
-      void preloadTransactionReceipts(transactionsQuery.data.slice(0, 10));
-    }
-  }, [transactionsQuery.data]);
-
-  const invalidateTransactionQueries = useCallback(async () => {
+  /**
+   * Marca a lista como desatualizada e refaz a busca em segundo plano: quem salva não espera o
+   * download da coleção inteira para ver a tela fechar. Falhas do refetch caem no estado de
+   * erro da própria query, não na mutação que já foi concluída.
+   */
+  const invalidateTransactionQueries = useCallback(() => {
     if (!user) return;
 
-    await queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
       exact: true,
     });
@@ -98,14 +90,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     async (input: TransactionFormValues): Promise<string> => {
       if (!user) throw new Error('Usuário não autenticado.');
 
-      const id = await createTransactionService(user.uid, input);
+      const id = await createTransactionWithReceipt(transactionRepository, user.uid, input);
 
-      if (input.receiptFile) {
-        const receipt = await uploadTransactionReceipt(user.uid, id, input.receiptFile);
-        await updateTransactionService(user.uid, id, input, receipt, false);
-      }
-
-      await invalidateTransactionQueries();
+      invalidateTransactionQueries();
       return id;
     },
     [invalidateTransactionQueries, user]
@@ -119,17 +106,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     ): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
 
-      const receipt = input.receiptFile
-        ? await uploadTransactionReceipt(user.uid, id, input.receiptFile)
-        : input.receipt;
+      await updateTransactionWithReceipt(transactionRepository, user.uid, id, input, previousReceipt);
 
-      await updateTransactionService(user.uid, id, input, receipt, Boolean(previousReceipt));
-
-      if (previousReceipt && previousReceipt.path !== receipt?.path) {
-        await deleteTransactionReceipt(previousReceipt.path);
-      }
-
-      await invalidateTransactionQueries();
+      invalidateTransactionQueries();
     },
     [invalidateTransactionQueries, user]
   );
@@ -138,10 +117,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     async (id: string, receiptPath?: string): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
 
-      await deleteTransactionService(user.uid, id, receiptPath);
-      await invalidateTransactionQueries();
+      await transactionRepository.deleteTransaction(user.uid, id, receiptPath);
+
+      // O item já foi removido no servidor: tira da lista agora para não reaparecer até o refetch.
+      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_QUERY_KEYS.list(user.uid), (current) =>
+        current?.filter((transaction) => transaction.id !== id)
+      );
+      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, user]
+    [invalidateTransactionQueries, queryClient, user]
   );
 
   const refreshTransactions = useCallback(async () => {
@@ -152,47 +136,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     });
   }, [queryClient, user]);
 
-  // Cálculos globais de totais e resumo
-  const metrics = useMemo(() => {
-    const deposits = transactions.filter((t) => isDepositType(t.type));
-    const expenses = transactions.filter((t) => !isDepositType(t.type));
-
-    const totalIncome = deposits.reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
-    const balance = totalIncome - totalExpenses;
-
-    const biggestExpense = expenses.length
-      ? Math.max(...expenses.map((t) => t.amount))
-      : 0;
-
-    const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
-    const recentTransactions = sorted.slice(0, 5);
-
-    const categoryMap = new Map<number, number>();
-    for (const t of expenses) {
-      if (t.categories_id === undefined) continue;
-      const prev = categoryMap.get(t.categories_id) ?? 0;
-      categoryMap.set(t.categories_id, prev + t.amount);
-    }
-
-    const categoryBreakdown: CategoryBreakdownItem[] = Array.from(categoryMap.entries()).map(
-      ([id, total]) => ({
-        categoryId: id,
-        label: CATEGORY_OPTIONS.find((c) => c.value === id)?.label ?? 'Outros',
-        total,
-      })
-    );
-
-    return {
-      balance,
-      totalIncome,
-      totalExpenses,
-      biggestExpense,
-      transactionCount: transactions.length,
-      recentTransactions,
-      categoryBreakdown,
-    };
-  }, [transactions]);
+  const metrics = useMemo(() => calculateTransactionMetrics(transactions), [transactions]);
 
   const value = useMemo<TransactionsContextValue>(
     () => ({

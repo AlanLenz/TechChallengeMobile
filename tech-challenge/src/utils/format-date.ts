@@ -1,5 +1,5 @@
 import { format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR } from 'date-fns/locale/pt-BR';
 
 export function formatDate(date: Date | number, pattern = 'dd/MM/yyyy'): string {
   return format(date, pattern, { locale: ptBR });

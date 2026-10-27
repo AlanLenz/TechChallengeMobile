@@ -11,11 +11,20 @@ import { deleteFile, getFileUrl, getStorageErrorMessage, uploadFile } from '@/fi
 
 import { getReceiptStoragePath } from '../../constants';
 import type { CategoryId, Transaction, TransactionReceipt } from '../../domain/entities/transaction.entity';
-import { randomFileSuffix, resolveReceiptMimeType, storedFileExtension, type ReceiptFileInput } from '../../utils';
+import {
+  resolveReceiptMimeType,
+  storedFileExtension,
+  type ReceiptFileInput,
+} from '../../domain/rules/receipt.rules';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
 import { parseCurrencyToNumber } from '@/utils/mask';
 
 import type { ITransactionRepository } from '../../domain/repositories/transaction.repository';
+
+/** Sufixo aleatório curto para evitar colisão de nomes no Storage (sem dependência de uuid). */
+function randomFileSuffix(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
 
 function transactionsPath(userId: string): string {
   return `users/${userId}/${COLLECTIONS.TRANSACTIONS}`;
@@ -32,19 +41,19 @@ function toDocumentData(input: TransactionFormValues) {
   };
 }
 
-export async function getTransactions(userId: string): Promise<Transaction[]> {
+async function getTransactions(userId: string): Promise<Transaction[]> {
   return queryCollection<Transaction>(transactionsPath(userId));
 }
 
-export async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
+async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
   return getDocument<Transaction>(transactionsPath(userId), id);
 }
 
-export async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
+async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
   return addDocument(transactionsPath(userId), toDocumentData(input));
 }
 
-export async function updateTransaction(
+async function updateTransaction(
   userId: string,
   id: string,
   input: TransactionFormValues,
@@ -63,7 +72,7 @@ export async function updateTransaction(
   return updateDocument(transactionsPath(userId), id, data);
 }
 
-export async function deleteTransaction(userId: string, id: string, receiptPath?: string): Promise<void> {
+async function deleteTransaction(userId: string, id: string, receiptPath?: string): Promise<void> {
   if (receiptPath) {
     await deleteTransactionReceipt(receiptPath);
   }
@@ -75,7 +84,7 @@ export async function deleteTransaction(userId: string, id: string, receiptPath?
  * Envia o arquivo ao Firebase Storage sob `users/{uid}/transactions/{id}/receipts/{nome-único}`
  * e devolve a referência a ser persistida na transação. Lança `Error` com mensagem de domínio.
  */
-export async function uploadTransactionReceipt(
+async function uploadTransactionReceipt(
   userId: string,
   transactionId: string,
   file: ReceiptFileInput
@@ -109,7 +118,7 @@ export async function uploadTransactionReceipt(
 }
 
 /** Remove um comprovante do Storage. Best-effort: uma falha aqui não deve travar o fluxo. */
-export async function deleteTransactionReceipt(path: string): Promise<void> {
+async function deleteTransactionReceipt(path: string): Promise<void> {
   try {
     await deleteFile(path);
   } catch {

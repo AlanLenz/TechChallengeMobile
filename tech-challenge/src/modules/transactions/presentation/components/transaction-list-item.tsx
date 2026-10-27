@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 import { ROUTES } from '@/constants/routes';
-import { preloadImage } from '@/services/preload.service';
 import { colors } from '@/theme';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
@@ -22,10 +21,7 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
     <Pressable
       accessibilityRole="button"
       onPressIn={() => {
-        // Pré-carrega o comprovante e a tela de edição antecipadamente ao pressionar
-        if (transaction.receipt?.url) {
-          void preloadImage(transaction.receipt.url);
-        }
+        // Pré-carrega a tela de edição antecipadamente ao pressionar
         void import('./edit-transaction-screen');
       }}
       onPress={() => router.push({ pathname: ROUTES.MODALS.EDIT_TRANSACTION, params: { id: transaction.id } })}>

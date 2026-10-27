@@ -3,7 +3,7 @@ import '@/global.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,7 +14,7 @@ import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
 import { ConnectivityProvider } from '@/contexts/connectivity-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { ThemeProvider } from '@/contexts/theme-context';
-import { TransactionsProvider } from '@/contexts/transactions-context';
+import { TransactionsProvider } from '@/modules/transactions';
 import { queryClient } from '@/services/query-client';
 
 SplashScreen.preventAutoHideAsync();

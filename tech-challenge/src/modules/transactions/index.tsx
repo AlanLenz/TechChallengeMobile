@@ -1,6 +1,3 @@
-import { preloadImages } from '@/services/preload.service';
-import type { Transaction } from './domain/entities/transaction.entity';
-
 export { EditTransactionScreen } from './presentation/components/edit-transaction-screen';
 export { NewTransactionScreen } from './presentation/components/new-transaction-screen';
 export { TransactionForm } from './presentation/components/transaction-form';
@@ -16,33 +13,7 @@ export type {
 } from './domain/entities/transaction.entity';
 export { transactionFormSchema, validateDateRange } from './domain/entities/transaction.validation';
 export type { TransactionFormValues } from './domain/entities/transaction.validation';
-export {
-  createTransaction,
-  deleteTransaction,
-  deleteTransactionReceipt,
-  getTransaction,
-  getTransactions,
-  updateTransaction,
-  uploadTransactionReceipt,
-} from './infrastructure/firebase/firebase-transaction.repository';
+export { TransactionsProvider, useTransactionsContext } from './presentation/context/transactions-context';
+export type { CategoryBreakdownItem } from './domain/services/transaction-metrics.service';
 
-/**
- * Pré-carrega os módulos de telas e formulários de transações antecipadamente para navegação fluida.
- */
-export function preloadTransactionsModule(): Promise<unknown> {
-  return Promise.all([
-    import('./presentation/components/transactions-screen'),
-    import('./presentation/components/new-transaction-screen'),
-    import('./presentation/components/edit-transaction-screen'),
-  ]);
-}
-
-/**
- * Pré-carrega em lote as imagens de comprovantes anexados no cache nativo do dispositivo.
- */
-export function preloadTransactionReceipts(transactions: Transaction[]): Promise<boolean[]> {
-  const urls = transactions
-    .map((t) => t.receipt?.url)
-    .filter((url): url is string => Boolean(url));
-  return preloadImages(urls);
-}
+export { preloadTransactionsModule } from './presentation/preload-module';

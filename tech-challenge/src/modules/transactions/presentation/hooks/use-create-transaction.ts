@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '../context/transactions-context';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
 
 export function useCreateTransaction() {

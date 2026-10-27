@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 
-import type { CategoryBreakdownItem } from '@/contexts/transactions-context';
+import type { CategoryBreakdownItem } from '@/modules/transactions';
 
 import { CategoryChart } from './category-chart';
 import { IncomeExpenseChart } from './income-expense-chart';

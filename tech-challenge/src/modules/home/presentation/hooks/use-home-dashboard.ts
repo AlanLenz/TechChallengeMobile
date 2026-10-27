@@ -1,4 +1,4 @@
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '@/modules/transactions';
 import type { DashboardStats } from '../../domain/entities/home.entity';
 
 export function useHomeDashboard() {

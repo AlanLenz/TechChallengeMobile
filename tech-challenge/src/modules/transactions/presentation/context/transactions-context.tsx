@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
@@ -23,7 +22,6 @@ import {
   calculateTransactionMetrics,
   type CategoryBreakdownItem,
 } from '../../domain/services/transaction-metrics.service';
-import { preloadTransactionReceipts } from '../preload-receipts';
 
 export type { CategoryBreakdownItem };
 
@@ -74,16 +72,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
   const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
 
-  useEffect(() => {
-    if (transactionsQuery.data) {
-      void preloadTransactionReceipts(transactionsQuery.data.slice(0, 10));
-    }
-  }, [transactionsQuery.data]);
-
-  const invalidateTransactionQueries = useCallback(async () => {
+  /**
+   * Marca a lista como desatualizada e refaz a busca em segundo plano: quem salva não espera o
+   * download da coleção inteira para ver a tela fechar. Falhas do refetch caem no estado de
+   * erro da própria query, não na mutação que já foi concluída.
+   */
+  const invalidateTransactionQueries = useCallback(() => {
     if (!user) return;
 
-    await queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
       exact: true,
     });
@@ -95,7 +92,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
       const id = await createTransactionWithReceipt(transactionRepository, user.uid, input);
 
-      await invalidateTransactionQueries();
+      invalidateTransactionQueries();
       return id;
     },
     [invalidateTransactionQueries, user]
@@ -111,7 +108,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
       await updateTransactionWithReceipt(transactionRepository, user.uid, id, input, previousReceipt);
 
-      await invalidateTransactionQueries();
+      invalidateTransactionQueries();
     },
     [invalidateTransactionQueries, user]
   );
@@ -121,9 +118,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Usuário não autenticado.');
 
       await transactionRepository.deleteTransaction(user.uid, id, receiptPath);
-      await invalidateTransactionQueries();
+
+      // O item já foi removido no servidor: tira da lista agora para não reaparecer até o refetch.
+      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_QUERY_KEYS.list(user.uid), (current) =>
+        current?.filter((transaction) => transaction.id !== id)
+      );
+      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, user]
+    [invalidateTransactionQueries, queryClient, user]
   );
 
   const refreshTransactions = useCallback(async () => {

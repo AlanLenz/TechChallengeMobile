@@ -12,8 +12,9 @@ import { TabScreenLayout } from '@/layouts/tab-screen-layout';
 import { TRANSACTIONS_PAGE_SIZE } from '../../constants';
 import { useTransactionFilters } from '../hooks/use-transaction-filters';
 import { useTransactions } from '../hooks/use-transactions';
-import { filterTransactions, paginate } from '../../utils';
-import { preloadTransactionsModule } from '../../index';
+import { filterTransactions } from '../../domain/services/transaction-filter.service';
+import { paginate } from '../../utils';
+import { preloadTransactionsModule } from '../preload-module';
 import { TransactionFiltersPanel } from './transaction-filters-panel';
 import { TransactionListItem } from './transaction-list-item';
 

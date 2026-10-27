@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import * as WebBrowser from 'expo-web-browser';
 import { type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
@@ -9,7 +9,8 @@ import { colors } from '@/theme';
 
 import { useReceiptPicker } from '../hooks/use-receipt-picker';
 import type { TransactionReceipt } from '../../domain/entities/transaction.entity';
-import { formatFileSize, type ReceiptFileInput } from '../../utils';
+import type { ReceiptFileInput } from '../../domain/rules/receipt.rules';
+import { formatFileSize } from '../../utils';
 
 type ReceiptFieldProps = {
   /** Arquivo recém-selecionado, ainda não enviado. */

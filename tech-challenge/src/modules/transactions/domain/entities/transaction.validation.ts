@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
 import { parseCurrencyToNumber } from '@/utils/mask';
-import { RECEIPT_MAX_SIZE_BYTES } from '../../constants';
+import {
+  RECEIPT_MAX_SIZE_BYTES,
+  isAllowedReceiptType,
+  type ReceiptFileInput,
+} from '../rules/receipt.rules';
 import type { TransactionReceipt } from './transaction.entity';
-import { isAllowedReceiptType, type ReceiptFileInput } from '../../utils';
 
 /** Arquivo recém-selecionado no picker, ainda não enviado ao Storage. */
 const receiptFileSchema = z

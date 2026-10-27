@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { requestPasswordReset } from '../../infrastructure/firebase/firebase-auth.repository';
+import { authRepository } from '../../container';
 import type { ForgotPasswordInput } from '../../domain/entities/auth.entity';
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: ({ email }: ForgotPasswordInput) => requestPasswordReset(email),
+    mutationFn: ({ email }: ForgotPasswordInput) => authRepository.requestPasswordReset(email),
   });
 }
 

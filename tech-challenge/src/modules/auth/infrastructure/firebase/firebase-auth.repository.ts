@@ -1,25 +1,29 @@
 import { getAuthErrorMessage, resetPassword, signIn, signUp } from '@/firebase/auth';
 
-export async function login(email: string, password: string) {
+import type { IAuthRepository } from '../../domain/repositories/auth.repository';
+
+async function login(email: string, password: string): Promise<void> {
   try {
-    return await signIn(email, password);
+    await signIn(email, password);
   } catch (error) {
     throw new Error(getAuthErrorMessage(error));
   }
 }
 
-export async function register(name: string, email: string, password: string) {
+async function register(name: string, email: string, password: string): Promise<void> {
   try {
-    return await signUp(name, email, password);
+    await signUp(name, email, password);
   } catch (error) {
     throw new Error(getAuthErrorMessage(error));
   }
 }
 
-export async function requestPasswordReset(email: string) {
+async function requestPasswordReset(email: string): Promise<void> {
   try {
     await resetPassword(email);
   } catch (error) {
     throw new Error(getAuthErrorMessage(error));
   }
 }
+
+export const firebaseAuthRepository: IAuthRepository = { login, register, requestPasswordReset };

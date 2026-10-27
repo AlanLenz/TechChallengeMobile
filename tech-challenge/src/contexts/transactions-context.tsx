@@ -4,13 +4,15 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from 'react';
+
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthContext } from '@/contexts/auth-context';
 import {
   CATEGORY_OPTIONS,
+  TRANSACTIONS_QUERY_KEYS,
   createTransaction as createTransactionService,
   deleteTransaction as deleteTransactionService,
   deleteTransactionReceipt,
@@ -60,78 +62,53 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuthContext();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const reload = useCallback(async () => {
-    if (!user) {
-      setTransactions([]);
-      return;
-    }
-    try {
-      const data = await getTransactions(user.uid);
-      setTransactions(data);
-      setError(null);
+  const transactionsQuery = useQuery({
+    queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
+    queryFn: () => (user ? getTransactions(user.uid) : Promise.resolve([])),
+    enabled: Boolean(user),
+    staleTime: 30_000,
+  });
 
-      // Pré-carrega comprovantes das transações recentes para cache nativo
-      void preloadTransactionReceipts(data.slice(0, 10));
-    } catch (err) {
-      console.error('[TransactionsContext] Erro ao buscar transações:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar transações.');
-    }
-  }, [user]);
+  const transactions = useMemo(
+    () => transactionsQuery.data ?? [],
+    [transactionsQuery.data]
+  );
+  const isLoading = transactionsQuery.isLoading;
+  const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
+  const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
 
   useEffect(() => {
-    let isMounted = true;
+    if (transactionsQuery.data) {
+      void preloadTransactionReceipts(transactionsQuery.data.slice(0, 10));
+    }
+  }, [transactionsQuery.data]);
 
-    Promise.resolve().then(async () => {
-      if (!isMounted) return;
+  const invalidateTransactionQueries = useCallback(async () => {
+    if (!user) return;
 
-      if (!user) {
-        setTransactions([]);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const data = await getTransactions(user.uid);
-        if (isMounted) {
-          setTransactions(data);
-          setError(null);
-
-          // Pré-carrega comprovantes das transações recentes para cache nativo
-          void preloadTransactionReceipts(data.slice(0, 10));
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar transações.');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    await queryClient.invalidateQueries({
+      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
+      exact: true,
     });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+  }, [queryClient, user]);
 
   const createTransaction = useCallback(
     async (input: TransactionFormValues): Promise<string> => {
       if (!user) throw new Error('Usuário não autenticado.');
+
       const id = await createTransactionService(user.uid, input);
+
       if (input.receiptFile) {
         const receipt = await uploadTransactionReceipt(user.uid, id, input.receiptFile);
         await updateTransactionService(user.uid, id, input, receipt, false);
       }
-      await reload();
+
+      await invalidateTransactionQueries();
       return id;
     },
-    [user, reload]
+    [invalidateTransactionQueries, user]
   );
 
   const updateTransaction = useCallback(
@@ -141,6 +118,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       previousReceipt?: TransactionReceipt
     ): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
+
       const receipt = input.receiptFile
         ? await uploadTransactionReceipt(user.uid, id, input.receiptFile)
         : input.receipt;
@@ -150,29 +128,29 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (previousReceipt && previousReceipt.path !== receipt?.path) {
         await deleteTransactionReceipt(previousReceipt.path);
       }
-      await reload();
+
+      await invalidateTransactionQueries();
     },
-    [user, reload]
+    [invalidateTransactionQueries, user]
   );
 
   const deleteTransaction = useCallback(
     async (id: string, receiptPath?: string): Promise<void> => {
       if (!user) throw new Error('Usuário não autenticado.');
+
       await deleteTransactionService(user.uid, id, receiptPath);
-      await reload();
+      await invalidateTransactionQueries();
     },
-    [user, reload]
+    [invalidateTransactionQueries, user]
   );
 
   const refreshTransactions = useCallback(async () => {
     if (!user) return;
-    setIsRefreshing(true);
-    try {
-      await reload();
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [user, reload]);
+    await queryClient.refetchQueries({
+      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
+      exact: true,
+    });
+  }, [queryClient, user]);
 
   // Cálculos globais de totais e resumo
   const metrics = useMemo(() => {
@@ -228,17 +206,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       deleteTransaction,
       refreshTransactions,
     }),
-    [
-      transactions,
-      isLoading,
-      isRefreshing,
-      error,
-      metrics,
-      createTransaction,
-      updateTransaction,
-      deleteTransaction,
-      refreshTransactions,
-    ]
+    [transactions, isLoading, isRefreshing, error, metrics, createTransaction, updateTransaction, deleteTransaction, refreshTransactions]
   );
 
   return (

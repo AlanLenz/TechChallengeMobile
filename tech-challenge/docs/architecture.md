@@ -282,6 +282,11 @@ Firebase (Firestore / Auth / Storage)
 - **Estado de servidor** (dados que vêm do Firestore/Auth/Storage): sempre via
   `@tanstack/react-query`, dentro de hooks do próprio module (`use-accounts.ts`,
   `use-transfers.ts`). Nunca duplicado em Context ou `useState` manual.
+- **Cache de servidor:** mantido em memória pelo React Query e separado por usuário nas query
+  keys. A lista de transações fica fresca por 30 segundos; queries sem política específica usam
+  o padrão de 60 segundos. Mutations invalidam a lista afetada, e a troca/logout de usuário
+  remove as queries associadas à sessão anterior. Dados financeiros não são persistidos no
+  armazenamento local.
 - **Estado de cliente/UI compartilhado** entre módulos: Context API (sessão, tema,
   conectividade, notificações).
 - **Estado local de tela**: `useState`/`useReducer` dentro do próprio componente — não sobe

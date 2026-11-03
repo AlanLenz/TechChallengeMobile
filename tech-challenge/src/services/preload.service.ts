@@ -7,7 +7,7 @@ import { Image } from 'expo-image';
 export async function preloadImage(url: string | undefined | null): Promise<boolean> {
   if (!url || typeof url !== 'string') return false;
   const trimmed = url.trim();
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return false;
+  if (!trimmed.startsWith('https://')) return false;
 
   try {
     return await Image.prefetch(trimmed, 'memory-disk');
@@ -26,7 +26,7 @@ export async function preloadImages(urls: (string | undefined | null)[]): Promis
     new Set(
       urls
         .map((u) => u?.trim())
-        .filter((u): u is string => Boolean(u && (u.startsWith('http://') || u.startsWith('https://'))))
+        .filter((u): u is string => Boolean(u && u.startsWith('https://')))
     )
   );
 

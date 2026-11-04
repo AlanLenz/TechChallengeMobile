@@ -6,8 +6,8 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANT_CONTAINER: Record<ButtonVariant, string> = {
   primary: 'bg-primary-500 active:bg-primary-600',
-  secondary: 'bg-neutral-100 active:bg-neutral-200 dark:bg-neutral-800 dark:active:bg-neutral-700',
-  ghost: 'bg-transparent active:bg-neutral-100 dark:active:bg-neutral-800',
+  secondary: 'bg-neutral-200 active:bg-neutral-300 dark:bg-neutral-800 dark:active:bg-neutral-700',
+  ghost: 'bg-transparent active:bg-neutral-200 dark:active:bg-neutral-800',
   danger: 'bg-danger-500 active:bg-danger-600',
 };
 

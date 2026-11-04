@@ -54,13 +54,13 @@ export type TransactionsContextValue = {
 const TransactionsContext = createContext<TransactionsContextValue | undefined>(undefined);
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuthContext();
+  const { user, isBiometricLocked } = useAuthContext();
   const queryClient = useQueryClient();
 
   const transactionsQuery = useQuery({
     queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
     queryFn: () => (user ? transactionRepository.getTransactions(user.uid) : Promise.resolve([])),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && !isBiometricLocked,
     staleTime: 30_000,
   });
 

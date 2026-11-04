@@ -40,16 +40,16 @@ export function Select<T extends string | number>({
         onPress={() => setOpen(true)}
         className={cx(
           'flex-row items-center justify-between rounded-xl border bg-white px-4 py-3 dark:bg-neutral-900',
-          error ? 'border-danger-500' : 'border-neutral-200 dark:border-neutral-700'
+          error ? 'border-danger-500' : 'border-neutral-300 dark:border-neutral-700'
         )}>
         <Text
           className={cx(
             'text-body',
-            selected ? 'text-neutral-900 dark:text-white' : 'text-neutral-400'
+            selected ? 'text-neutral-900 dark:text-white' : 'text-neutral-500'
           )}>
           {selected?.label ?? placeholder}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={colors.neutral[400]} />
+        <Ionicons name="chevron-down" size={18} color={colors.neutral[500]} />
       </Pressable>
       {error ? <Text className="text-small text-danger-500">{error}</Text> : null}
 

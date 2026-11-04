@@ -23,12 +23,12 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       <View className="relative justify-center">
         <TextInput
           ref={ref}
-          placeholderTextColor="#9AA0AC"
+          placeholderTextColor="#60646C"
           secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
           className={cx(
             'rounded-xl border bg-white px-4 py-3 text-body text-neutral-900 dark:bg-neutral-900 dark:text-white',
             secureTextEntry ? 'pr-12' : '',
-            error ? 'border-danger-500' : 'border-neutral-200 dark:border-neutral-700',
+            error ? 'border-danger-500' : 'border-neutral-300 dark:border-neutral-700',
             className
           )}
           {...rest}
@@ -44,7 +44,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color="#9AA0AC"
+              color="#60646C"
             />
           </Pressable>
         ) : null}

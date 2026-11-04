@@ -5,14 +5,14 @@ import { cx } from '@/utils/cx';
 export type BadgeTone = 'neutral' | 'success' | 'danger' | 'warning';
 
 const TONE_CONTAINER: Record<BadgeTone, string> = {
-  neutral: 'bg-neutral-100 dark:bg-neutral-800',
-  success: 'bg-success-50 dark:bg-success-500/20',
-  danger: 'bg-danger-50 dark:bg-danger-500/20',
-  warning: 'bg-warning-50 dark:bg-warning-500/20',
+  neutral: 'bg-neutral-200 dark:bg-neutral-800',
+  success: 'bg-success-100 dark:bg-success-500/20',
+  danger: 'bg-danger-100 dark:bg-danger-500/20',
+  warning: 'bg-warning-100 dark:bg-warning-500/20',
 };
 
 const TONE_TEXT: Record<BadgeTone, string> = {
-  neutral: 'text-neutral-700 dark:text-neutral-200',
+  neutral: 'text-neutral-800 dark:text-neutral-200',
   success: 'text-success-700 dark:text-success-100',
   danger: 'text-danger-700 dark:text-danger-100',
   warning: 'text-warning-600 dark:text-warning-100',

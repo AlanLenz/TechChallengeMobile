@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Typography } from '@/components/ui/typography';
+import { useAppContext } from '@/contexts/app-context';
 import { formatCurrency } from '@/utils/format-currency';
 
 const DAYS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -23,7 +23,7 @@ type HeroCardProps = {
 };
 
 export function HeroCard({ firstName, balance }: HeroCardProps) {
-  const [visible, setVisible] = useState(true);
+  const { areValuesVisible, toggleValuesVisibility } = useAppContext();
 
   return (
     <View className="rounded-2xl bg-teal-900 p-5 gap-4">
@@ -43,16 +43,20 @@ export function HeroCard({ firstName, balance }: HeroCardProps) {
           <Typography variant="small" className="text-teal-300">
             Saldo
           </Typography>
-          <Pressable onPress={() => setVisible((v) => !v)} hitSlop={8}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={areValuesVisible ? 'Ocultar valores financeiros' : 'Mostrar valores financeiros'}
+            onPress={toggleValuesVisibility}
+            hitSlop={8}>
             <Ionicons
-              name={visible ? 'eye-outline' : 'eye-off-outline'}
+              name={areValuesVisible ? 'eye-outline' : 'eye-off-outline'}
               size={16}
               color="#5eead4"
             />
           </Pressable>
         </View>
         <Typography variant="display" className="text-white">
-          {visible ? formatCurrency(balance) : '••••••'}
+          {areValuesVisible ? formatCurrency(balance) : 'R$ ••••••'}
         </Typography>
       </View>
     </View>

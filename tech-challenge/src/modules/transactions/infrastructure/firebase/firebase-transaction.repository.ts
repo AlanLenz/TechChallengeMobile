@@ -17,6 +17,7 @@ import {
   type ReceiptFileInput,
 } from '../../domain/rules/receipt.rules';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import { decryptSensitiveText, encryptSensitiveText } from '@/utils/crypto';
 import { parseCurrencyToNumber } from '@/utils/mask';
 
 import type { ITransactionRepository } from '../../domain/repositories/transaction.repository';
@@ -30,10 +31,14 @@ function transactionsPath(userId: string): string {
   return `users/${userId}/${COLLECTIONS.TRANSACTIONS}`;
 }
 
-/** Campos de domínio da transação — sem `receiptFile`/`receipt`, tratados à parte. */
-function toDocumentData(input: TransactionFormValues) {
+/**
+ * Campos de domínio da transação persistidos no Firestore.
+ * A descrição (`description`) contém detalhes pessoais/financeiros sensíveis do lançamento e é
+ * criptografada em nível de aplicação (`enc:v1:...`) vinculada ao `userId` antes do envio.
+ */
+function toDocumentData(userId: string, input: TransactionFormValues) {
   return {
-    description: input.description.trim(),
+    description: encryptSensitiveText(input.description.trim(), userId),
     amount: parseCurrencyToNumber(input.amount),
     date: input.date,
     type: input.type,
@@ -41,16 +46,32 @@ function toDocumentData(input: TransactionFormValues) {
   };
 }
 
+/** Descriptografa de forma transparente os campos sensíveis de uma transação lida do Firestore. */
+function fromDocumentData(userId: string, transaction: Transaction): Transaction {
+  return {
+    ...transaction,
+    description: decryptSensitiveText(transaction.description, userId),
+    receipt: transaction.receipt
+      ? {
+          ...transaction.receipt,
+          name: decryptSensitiveText(transaction.receipt.name, userId),
+        }
+      : undefined,
+  };
+}
+
 async function getTransactions(userId: string): Promise<Transaction[]> {
-  return queryCollection<Transaction>(transactionsPath(userId));
+  const docs = await queryCollection<Transaction>(transactionsPath(userId));
+  return docs.map((doc) => fromDocumentData(userId, doc));
 }
 
 async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
-  return getDocument<Transaction>(transactionsPath(userId), id);
+  const doc = await getDocument<Transaction>(transactionsPath(userId), id);
+  return doc ? fromDocumentData(userId, doc) : null;
 }
 
 async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
-  return addDocument(transactionsPath(userId), toDocumentData(input));
+  return addDocument(transactionsPath(userId), toDocumentData(userId, input));
 }
 
 async function updateTransaction(
@@ -60,10 +81,13 @@ async function updateTransaction(
   receipt: TransactionReceipt | undefined,
   hadReceipt: boolean
 ): Promise<void> {
-  const data: Record<string, unknown> = toDocumentData(input);
+  const data: Record<string, unknown> = toDocumentData(userId, input);
 
   if (receipt) {
-    data.receipt = receipt;
+    data.receipt = {
+      ...receipt,
+      name: encryptSensitiveText(receipt.name, userId),
+    };
   } else if (hadReceipt) {
     // Comprovante removido pelo usuário — apaga o campo (o SDK não aceita `undefined`).
     data.receipt = deleteFieldValue();
@@ -101,7 +125,7 @@ async function uploadTransactionReceipt(
   try {
     await uploadFile(path, blob, {
       contentType,
-      customMetadata: { originalName: file.name },
+      customMetadata: { originalName: encryptSensitiveText(file.name, userId) },
     });
   } catch (error) {
     throw new Error(getStorageErrorMessage(error));

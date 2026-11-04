@@ -133,7 +133,7 @@ export function ReceiptField({
         />
       )}
 
-      <Typography variant="small" className="text-neutral-400">
+      <Typography variant="small" className="text-neutral-600 dark:text-neutral-400">
         JPG, PNG, WEBP ou PDF · até 5 MB
       </Typography>
 

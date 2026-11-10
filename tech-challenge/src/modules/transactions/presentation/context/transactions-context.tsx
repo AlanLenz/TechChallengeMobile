@@ -6,15 +6,12 @@ import {
   type ReactNode,
 } from 'react';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-
 import { useAuthContext } from '@/contexts/auth-context';
 
 import {
   createTransactionWithReceipt,
   updateTransactionWithReceipt,
 } from '../../application/transaction.use-cases';
-import { TRANSACTIONS_QUERY_KEYS } from '../../constants';
 import { transactionRepository } from '../../container';
 import type { Transaction, TransactionReceipt } from '../../domain/entities/transaction.entity';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
@@ -22,13 +19,13 @@ import {
   calculateTransactionMetrics,
   type CategoryBreakdownItem,
 } from '../../domain/services/transaction-metrics.service';
+import { useTransactionsStream } from '../hooks/use-transactions-stream';
 
 export type { CategoryBreakdownItem };
 
 export type TransactionsContextValue = {
   transactions: Transaction[];
   isLoading: boolean;
-  isRefreshing: boolean;
   error: string | null;
 
   // Métricas calculadas globalmente
@@ -55,47 +52,21 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { user, isBiometricLocked } = useAuthContext();
-  const queryClient = useQueryClient();
 
-  const transactionsQuery = useQuery({
-    queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
-    queryFn: () => (user ? transactionRepository.getTransactions(user.uid) : Promise.resolve([])),
-    enabled: Boolean(user) && !isBiometricLocked,
-    staleTime: 30_000,
-  });
-
-  const transactions = useMemo(
-    () => transactionsQuery.data ?? [],
-    [transactionsQuery.data]
+  // Fluxo reativo: a lista é empurrada pelo repositório a cada mudança, então as ações CRUD
+  // abaixo só escrevem — não precisam invalidar nem refazer a busca.
+  const { transactions, isLoading, error, resubscribe } = useTransactionsStream(
+    user?.uid,
+    Boolean(user) && !isBiometricLocked
   );
-  const isLoading = transactionsQuery.isLoading;
-  const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
-  const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
-
-  /**
-   * Marca a lista como desatualizada e refaz a busca em segundo plano: quem salva não espera o
-   * download da coleção inteira para ver a tela fechar. Falhas do refetch caem no estado de
-   * erro da própria query, não na mutação que já foi concluída.
-   */
-  const invalidateTransactionQueries = useCallback(() => {
-    if (!user) return;
-
-    void queryClient.invalidateQueries({
-      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
-      exact: true,
-    });
-  }, [queryClient, user]);
 
   const createTransaction = useCallback(
     async (input: TransactionFormValues): Promise<string> => {
       if (!user) throw new Error('Usuário não autenticado.');
 
-      const id = await createTransactionWithReceipt(transactionRepository, user.uid, input);
-
-      invalidateTransactionQueries();
-      return id;
+      return createTransactionWithReceipt(transactionRepository, user.uid, input);
     },
-    [invalidateTransactionQueries, user]
+    [user]
   );
 
   const updateTransaction = useCallback(
@@ -107,10 +78,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Usuário não autenticado.');
 
       await updateTransactionWithReceipt(transactionRepository, user.uid, id, input, previousReceipt);
-
-      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, user]
+    [user]
   );
 
   const deleteTransaction = useCallback(
@@ -118,23 +87,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Usuário não autenticado.');
 
       await transactionRepository.deleteTransaction(user.uid, id, receiptPath);
-
-      // O item já foi removido no servidor: tira da lista agora para não reaparecer até o refetch.
-      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_QUERY_KEYS.list(user.uid), (current) =>
-        current?.filter((transaction) => transaction.id !== id)
-      );
-      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, queryClient, user]
+    [user]
   );
 
+  /** Reinicia a assinatura (útil para "tentar novamente" após um erro de conexão/permissão). */
   const refreshTransactions = useCallback(async () => {
-    if (!user) return;
-    await queryClient.refetchQueries({
-      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
-      exact: true,
-    });
-  }, [queryClient, user]);
+    resubscribe();
+  }, [resubscribe]);
 
   const metrics = useMemo(() => calculateTransactionMetrics(transactions), [transactions]);
 
@@ -142,7 +102,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     () => ({
       transactions,
       isLoading,
-      isRefreshing,
       error,
       ...metrics,
       createTransaction,
@@ -150,7 +109,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       deleteTransaction,
       refreshTransactions,
     }),
-    [transactions, isLoading, isRefreshing, error, metrics, createTransaction, updateTransaction, deleteTransaction, refreshTransactions]
+    [transactions, isLoading, error, metrics, createTransaction, updateTransaction, deleteTransaction, refreshTransactions]
   );
 
   return (

@@ -14,6 +14,7 @@ import {
   updateDoc,
   where,
   type DocumentData,
+  type FirestoreError,
   type Firestore,
   type QueryConstraint,
   type WhereFilterOp,
@@ -166,5 +167,31 @@ export function subscribeToDocument<
           : null
       );
     }
+  );
+}
+
+/**
+ * Assina uma coleção em tempo real: `onData` recebe a lista completa a cada mudança (inclusive
+ * escritas locais ainda pendentes e o cache offline). Devolve a função que cancela a assinatura.
+ */
+export function subscribeToCollection<T extends DocumentData>(
+  path: string,
+  onData: (data: (T & { id: string })[]) => void,
+  onError: (error: FirestoreError) => void
+): () => void {
+  return onSnapshot(
+    collection(getDb(), path),
+    (snapshot) => {
+      onData(
+        snapshot.docs.map(
+          (documentSnapshot) =>
+            ({
+              id: documentSnapshot.id,
+              ...documentSnapshot.data(),
+            }) as T & { id: string }
+        )
+      );
+    },
+    onError
   );
 }

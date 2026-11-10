@@ -14,8 +14,8 @@ import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
 import { ConnectivityProvider } from '@/contexts/connectivity-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { ThemeProvider } from '@/contexts/theme-context';
-import { TransactionsProvider } from '@/contexts/transactions-context';
 import { queryClient } from '@/services/query-client';
+import { TransactionsProvider } from '@/modules/transactions';
 
 SplashScreen.preventAutoHideAsync();
 

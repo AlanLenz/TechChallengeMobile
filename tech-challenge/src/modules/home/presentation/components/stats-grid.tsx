@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, Platform, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
@@ -21,12 +21,12 @@ function StatCard({ label, value, accent = 'neutral' }: StatCardProps) {
       Animated.timing(opacity, {
         toValue: 1,
         duration: 400,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(translateY, {
         toValue: 0,
         duration: 400,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
   }, [opacity, translateY]);
@@ -101,4 +101,3 @@ export function StatsGrid({
     </View>
   );
 }
-

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -6,12 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Divider } from '@/components/ui/divider';
 import { Typography } from '@/components/ui/typography';
+import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
 import { TabScreenLayout } from '@/layouts/tab-screen-layout';
 
 import { useProfile } from '../hooks/use-profile';
 
 export function ProfileScreen() {
+  const router = useRouter();
   const { signOut } = useAuthContext();
   const { name, email, photoUrl, isEmailVerified, sendVerificationEmail } = useProfile();
   const [resendStatus, setResendStatus] = useState<string | null>(null);
@@ -37,6 +40,11 @@ export function ProfileScreen() {
           name={name || email || 'Usuário'}
           photoUrl={photoUrl}
           size={80}
+        />
+        <Button
+          label="Alterar foto"
+          variant="secondary"
+          onPress={() => router.push(ROUTES.MODALS.EDIT_AVATAR)}
         />
 
         <View className="items-center gap-1">

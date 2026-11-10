@@ -13,7 +13,7 @@ import { TRANSACTIONS_PAGE_SIZE } from '../../constants';
 import { useTransactionFilters } from '../hooks/use-transaction-filters';
 import { useTransactions } from '../hooks/use-transactions';
 import { filterTransactions, paginate } from '../../utils';
-import { preloadTransactionsModule } from '../../index';
+import { preloadTransactionsModule } from '../../preload';
 import { TransactionFiltersPanel } from './transaction-filters-panel';
 import { TransactionListItem } from './transaction-list-item';
 

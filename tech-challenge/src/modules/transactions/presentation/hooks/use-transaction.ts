@@ -1,4 +1,4 @@
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '../../context';
 
 /** Busca uma transação por id diretamente do estado global do TransactionsContext. */
 export function useTransaction(id?: string) {
@@ -10,4 +10,3 @@ export function useTransaction(id?: string) {
     isLoading: isLoading && !transaction,
   };
 }
-

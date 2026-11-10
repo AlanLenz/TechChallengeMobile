@@ -1,4 +1,4 @@
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '../../context';
 
 export function useTransactions() {
   const { transactions, isLoading, isRefreshing, error, refreshTransactions } =
@@ -13,4 +13,3 @@ export function useTransactions() {
     isRefreshing,
   };
 }
-

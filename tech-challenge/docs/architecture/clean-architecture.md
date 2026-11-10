@@ -66,7 +66,7 @@ Proibido (e verificado por ESLint em `eslint.config.js`):
 3. O Provider executa `createTransactionWithReceipt(transactionRepository, uid, input)` (application).
 4. O caso de uso usa apenas a interface `ITransactionRepository` (domain): cria o documento, envia o arquivo e o vincula.
 5. `transactionRepository` (`container.ts`) é o `firebaseTransactionRepository` (infrastructure), que fala com `@/firebase/firestore` e `@/firebase/storage`.
-6. O Provider invalida a query e a lista é recarregada; as métricas são recalculadas por `calculateTransactionMetrics` (domain).
+6. O Provider não refaz a busca: `useTransactionsStream` mantém uma assinatura em tempo real (`subscribeToTransactions` → `onSnapshot`), então a escrita chega à lista sozinha (inclusive offline e vinda de outros dispositivos); as métricas são recalculadas por `calculateTransactionMetrics` (domain). A assinatura é encerrada com o app bloqueado pela biometria ou sem usuário.
 
 ## Alterações realizadas
 

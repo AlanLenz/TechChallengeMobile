@@ -4,7 +4,7 @@ import {
   deleteDocument,
   deleteFieldValue,
   getDocument,
-  queryCollection,
+  subscribeToCollection,
   updateDocument,
 } from '@/firebase/firestore';
 import { deleteFile, getFileUrl, getStorageErrorMessage, uploadFile } from '@/firebase/storage';
@@ -20,7 +20,7 @@ import type { TransactionFormValues } from '../../domain/entities/transaction.va
 import { decryptSensitiveText, encryptSensitiveText } from '@/utils/crypto';
 import { parseCurrencyToNumber } from '@/utils/mask';
 
-import type { ITransactionRepository } from '../../domain/repositories/transaction.repository';
+import type { ITransactionRepository, Unsubscribe } from '../../domain/repositories/transaction.repository';
 
 /** Sufixo aleatório curto para evitar colisão de nomes no Storage (sem dependência de uuid). */
 function randomFileSuffix(): string {
@@ -60,9 +60,16 @@ function fromDocumentData(userId: string, transaction: Transaction): Transaction
   };
 }
 
-async function getTransactions(userId: string): Promise<Transaction[]> {
-  const docs = await queryCollection<Transaction>(transactionsPath(userId));
-  return docs.map((doc) => fromDocumentData(userId, doc));
+function subscribeToTransactions(
+  userId: string,
+  onData: (transactions: Transaction[]) => void,
+  onError: (error: Error) => void
+): Unsubscribe {
+  return subscribeToCollection<Transaction>(
+    transactionsPath(userId),
+    (docs) => onData(docs.map((doc) => fromDocumentData(userId, doc))),
+    onError
+  );
 }
 
 async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
@@ -151,7 +158,7 @@ async function deleteTransactionReceipt(path: string): Promise<void> {
 }
 
 export const firebaseTransactionRepository: ITransactionRepository = {
-  getTransactions,
+  subscribeToTransactions,
   getTransaction,
   createTransaction,
   updateTransaction,

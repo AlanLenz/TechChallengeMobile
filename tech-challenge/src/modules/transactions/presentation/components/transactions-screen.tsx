@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { FlatList } from 'react-native';
+import { FlatList, View } from 'react-native';
 
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
@@ -20,7 +20,7 @@ import { TransactionListItem } from './transaction-list-item';
 
 export function TransactionsScreen() {
   const router = useRouter();
-  const { data: transactions, isLoading } = useTransactions();
+  const { data: transactions, isLoading, isError, refetch } = useTransactions();
   const { draft, setField, applied, apply, clear, page, setPage, dateError } = useTransactionFilters();
 
   const filtered = useMemo(() => filterTransactions(transactions ?? [], applied), [transactions, applied]);
@@ -48,6 +48,15 @@ export function TransactionsScreen() {
       }>
       {isLoading ? (
         <Loading />
+      ) : isError ? (
+        <View className="flex-1 items-center justify-center gap-4">
+          <EmptyState
+            icon="alert-circle-outline"
+            title="Erro ao carregar transações"
+            description="Não foi possível atualizar suas transações. Verifique a conexão e tente novamente."
+          />
+          <Button label="Tentar novamente" variant="secondary" onPress={() => void refetch()} />
+        </View>
       ) : (
         <FlatList
           data={paginated}

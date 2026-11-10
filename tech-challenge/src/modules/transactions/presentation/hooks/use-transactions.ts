@@ -7,9 +7,9 @@ export function useTransactions() {
   return {
     data: transactions,
     isLoading,
+    isRefreshing,
     isError: Boolean(error),
     error,
     refetch: refreshTransactions,
-    isRefreshing,
   };
 }

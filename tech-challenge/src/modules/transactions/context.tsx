@@ -24,6 +24,7 @@ import {
   type CategoryBreakdownItem,
 } from './domain/services/transaction-metrics.service';
 import { preloadTransactionReceipts } from './preload';
+import { useTransactionsStream } from './presentation/hooks/use-transactions-stream';
 
 export type { CategoryBreakdownItem };
 
@@ -54,33 +55,35 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { user, isBiometricLocked } = useAuthContext();
   const queryClient = useQueryClient();
+  const queryKey = useMemo(() => TRANSACTIONS_QUERY_KEYS.list(user?.uid), [user?.uid]);
+  const isEnabled = Boolean(user) && !isBiometricLocked;
 
   const transactionsQuery = useQuery({
-    queryKey: TRANSACTIONS_QUERY_KEYS.list(user?.uid),
-    queryFn: () => (user ? transactionRepository.getTransactions(user.uid) : Promise.resolve([])),
-    enabled: Boolean(user) && !isBiometricLocked,
-    staleTime: 30_000,
+    queryKey,
+    queryFn: async () => queryClient.getQueryData<Transaction[]>(queryKey) ?? [],
+    enabled: false,
+    staleTime: Infinity,
   });
 
-  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
-  const isLoading = transactionsQuery.isLoading;
-  const isRefreshing = transactionsQuery.isFetching && !transactionsQuery.isLoading;
-  const error = transactionsQuery.error ? String(transactionsQuery.error) : null;
+  const stream = useTransactionsStream(user?.uid, isEnabled);
 
   useEffect(() => {
-    if (transactionsQuery.data) {
-      void preloadTransactionReceipts(transactionsQuery.data.slice(0, 10));
-    }
-  }, [transactionsQuery.data]);
+    if (!isEnabled || stream.isLoading || stream.error) return;
+    queryClient.setQueryData(queryKey, stream.transactions);
+    void preloadTransactionReceipts(stream.transactions.slice(0, 10));
+  }, [isEnabled, queryClient, queryKey, stream.error, stream.isLoading, stream.transactions]);
 
-  const invalidateTransactionQueries = useCallback(() => {
-    if (!user) return;
-
-    void queryClient.invalidateQueries({
-      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
-      exact: true,
-    });
-  }, [queryClient, user]);
+  const transactions = useMemo(
+    () =>
+      isEnabled && !stream.error
+        ? transactionsQuery.data ?? stream.transactions
+        : [],
+    [isEnabled, stream.error, stream.transactions, transactionsQuery.data]
+  );
+  const isLoading = isEnabled && stream.isLoading && transactionsQuery.data === undefined;
+  const isRefreshing = isEnabled && stream.isLoading && transactionsQuery.data !== undefined;
+  const error = stream.error;
+  const resubscribe = stream.resubscribe;
 
   const createTransaction = useCallback(
     async (input: TransactionFormValues): Promise<string> => {
@@ -88,10 +91,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
       const id = await createTransactionWithReceipt(transactionRepository, user.uid, input);
 
-      invalidateTransactionQueries();
       return id;
     },
-    [invalidateTransactionQueries, user]
+    [user]
   );
 
   const updateTransaction = useCallback(
@@ -103,10 +105,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Usuário não autenticado.');
 
       await updateTransactionWithReceipt(transactionRepository, user.uid, id, input, previousReceipt);
-
-      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, user]
+    [user]
   );
 
   const deleteTransaction = useCallback(
@@ -114,22 +114,13 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (!user) throw new Error('Usuário não autenticado.');
 
       await transactionRepository.deleteTransaction(user.uid, id, receiptPath);
-
-      queryClient.setQueryData<Transaction[]>(TRANSACTIONS_QUERY_KEYS.list(user.uid), (current) =>
-        current?.filter((transaction) => transaction.id !== id)
-      );
-      invalidateTransactionQueries();
     },
-    [invalidateTransactionQueries, queryClient, user]
+    [user]
   );
 
   const refreshTransactions = useCallback(async () => {
-    if (!user) return;
-    await queryClient.refetchQueries({
-      queryKey: TRANSACTIONS_QUERY_KEYS.list(user.uid),
-      exact: true,
-    });
-  }, [queryClient, user]);
+    if (isEnabled) resubscribe();
+  }, [isEnabled, resubscribe]);
 
   const metrics = useMemo(() => calculateTransactionMetrics(transactions), [transactions]);
 

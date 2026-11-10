@@ -5,6 +5,7 @@ import { ScrollView } from 'react-native';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
 import { ScreenContainer } from '@/components/layout/screen-container';
+import { Button } from '@/components/ui/button';
 import { FloatingActionButton } from '@/components/ui/fab';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
@@ -32,7 +33,7 @@ void preloadHomeCharts();
 export function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthContext();
-  const { data: stats, isPending, isError } = useHomeDashboard();
+  const { data: stats, isPending, isError, refetch } = useHomeDashboard();
 
   const firstName = (user?.displayName ?? user?.email ?? 'Usuário').split(' ')[0];
 
@@ -51,12 +52,13 @@ export function HomeScreen() {
 
   if (isError || !stats) {
     return (
-      <ScreenContainer className="justify-center">
+      <ScreenContainer className="justify-center gap-4">
         <EmptyState
           icon="alert-circle-outline"
           title="Erro ao carregar"
-          description="Não foi possível carregar o dashboard. Tente novamente."
+          description="Não foi possível carregar seus dados financeiros. Verifique a conexão e tente novamente."
         />
+        <Button label="Tentar novamente" variant="secondary" onPress={() => void refetch()} />
       </ScreenContainer>
     );
   }

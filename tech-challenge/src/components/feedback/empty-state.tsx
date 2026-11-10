@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 import { View } from 'react-native';
 
@@ -14,7 +14,7 @@ type EmptyStateProps = {
 export function EmptyState({ icon = 'file-tray-outline', title, description }: EmptyStateProps) {
   return (
     <View className="flex-1 items-center justify-center gap-2 px-8 py-12">
-      <Ionicons name={icon} size={40} color={colors.neutral[400]} />
+      <Ionicons name={icon} size={40} color={colors.neutral[600]} />
       <Typography variant="subtitle" className="text-center">
         {title}
       </Typography>

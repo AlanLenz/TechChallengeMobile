@@ -12,21 +12,21 @@ rules_version = '2';
 //   - displayName: string (optional, 1-100 chars) - user display name
 //   - name: string (optional, 1-100 chars) - alternative name field
 //   - email: string (optional, valid email format, max 254 chars) - user email
-//   - photoURL / photoUrl: string (optional, valid HTTP/HTTPS URL, max 2000 chars) - avatar URL
+//   - photoURL / photoUrl: string (optional, valid HTTPS URL, max 2000 chars) - avatar URL
 //   - createdAt: timestamp (optional, immutable once set) - document creation time
 //   - updatedAt: timestamp (optional) - document update time
 //
 // Collection: users/{userId}/transactions/{transactionId}
 // Document ID: {transactionId} (auto-generated unique ID)
 // Fields:
-//   - description: string (required, 1-200 chars) - transaction description
+//   - description: string (required, 1-900 chars, supports client-side encrypted payload) - transaction description
 //   - amount: number (required, > 0 and <= 999999999.99) - monetary transaction amount
 //   - date: string (required, ISO 8601 date string, 10-40 chars) - transaction date
-//   - type: string (required, 1-50 chars) - transaction type (e.g. Deposit, Transfer, expense)
-//   - categories_id: number/int (required, integer 1-100) - category identifier
+//   - type: string (required, 'Deposit' or 'Transfer') - transaction type
+//   - categories_id: number/int (required, integer 1-7) - category identifier
 //   - receipt: map (optional) - receipt attachment metadata containing:
-//       * name: string (required, 1-255 chars) - original filename
-//       * url: string (required, valid HTTP/HTTPS URL, 1-2000 chars) - download URL
+//       * name: string (required, 1-900 chars, supports client-side encrypted filename) - original filename
+//       * url: string (required, valid HTTPS URL, 8-2000 chars) - download URL
 //       * path: string (required, 1-500 chars, scoped to users/{userId}/...) - storage path
 //       * contentType: string (required, 1-100 chars) - file MIME type
 //
@@ -50,12 +50,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Validate HTTP/HTTPS URL format and reasonable length
+    // Validate HTTPS URL format and reasonable length
     function isValidUrl(url) {
       return url is string &&
         url.size() >= 8 &&
         url.size() <= 2000 &&
-        (url.matches('^https://.*') || url.matches('^http://.*'));
+        url.matches('^https://.*');
     }
 
     // Validate email format and RFC 5321 length limits
@@ -100,7 +100,7 @@ service cloud.firestore {
         receipt.keys().hasOnly(requiredKeys) &&
         receipt.name is string &&
         receipt.name.size() >= 1 &&
-        receipt.name.size() <= 255 &&
+        receipt.name.size() <= 900 &&
         isValidUrl(receipt.url) &&
         isScopedPath(receipt.path, userId) &&
         receipt.contentType is string &&
@@ -116,17 +116,16 @@ service cloud.firestore {
         data.keys().hasOnly(allAllowedKeys) &&
         data.description is string &&
         data.description.size() >= 1 &&
-        data.description.size() <= 200 &&
+        data.description.size() <= 900 &&
         data.amount is number &&
         data.amount > 0 &&
         data.amount <= 999999999.99 &&
         isValidDateString(data.date) &&
         data.type is string &&
-        data.type.size() >= 1 &&
-        data.type.size() <= 50 &&
+        data.type in ['Deposit', 'Transfer'] &&
         (data.categories_id is int || (data.categories_id is number && int(data.categories_id) == data.categories_id)) &&
         data.categories_id >= 1 &&
-        data.categories_id <= 100 &&
+        data.categories_id <= 7 &&
         (!('receipt' in data) || isValidReceipt(data.receipt, userId));
     }
 

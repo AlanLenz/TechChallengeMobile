@@ -10,10 +10,11 @@ import { ROUTES } from '@/constants/routes';
 import { TabScreenLayout } from '@/layouts/tab-screen-layout';
 
 import { TRANSACTIONS_PAGE_SIZE } from '../../constants';
+import { filterTransactions } from '../../domain/services/transaction-filter.service';
 import { useTransactionFilters } from '../hooks/use-transaction-filters';
 import { useTransactions } from '../hooks/use-transactions';
-import { filterTransactions, paginate } from '../../utils';
-import { preloadTransactionsModule } from '../../preload';
+import { paginate } from '../../utils';
+import { preloadTransactionsModule } from '../preload-module';
 import { TransactionFiltersPanel } from './transaction-filters-panel';
 import { TransactionListItem } from './transaction-list-item';
 
@@ -63,14 +64,16 @@ export function TransactionsScreen() {
             />
           }
           ListFooterComponent={
-            filtered.length > 0 ? (
-              <Pagination
-                page={currentPage}
-                totalPages={totalPages}
-                onPrev={() => setPage((current) => Math.max(1, current - 1))}
-                onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
-              />
-            ) : null
+            filtered.length > 0
+              ? () => (
+                  <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onPrev={() => setPage((current) => Math.max(1, current - 1))}
+                    onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  />
+                )
+              : undefined
           }
           ListEmptyComponent={
             <EmptyState

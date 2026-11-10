@@ -17,11 +17,15 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { colorScheme, setColorScheme } = useNativeWindColorScheme();
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [preference, setPreferenceState] = useState<ThemePreference>('light');
 
   useEffect(() => {
+    // A paleta do projeto (bg-background #E4EDE3 e superfícies claras) é voltada ao tema claro;
+    // inicializar em 'light' evita que o modo escuro do iOS aplique classes `dark:text-white`
+    // sobre o fundo claro `#E4EDE3`, gerando textos brancos/cinzas ilegíveis.
+    setColorScheme('light');
     preferencesStorage.getItem(THEME_STORAGE_KEY).then((stored) => {
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      if (stored === 'light' || stored === 'dark') {
         setPreferenceState(stored);
         setColorScheme(stored);
       }

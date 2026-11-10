@@ -61,7 +61,9 @@ export function TransactionForm({
   const receiptFile = useWatch({ control, name: 'receiptFile' });
   const receipt = useWatch({ control, name: 'receipt' });
 
-  const submit = handleSubmit((values) => onSubmit(values));
+  const submit = () => {
+    void handleSubmit((values) => onSubmit(values))();
+  };
 
   return (
     <View className="flex flex-1 flex-col justify-between gap-6 pb-8">

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 import { ROUTES } from '@/constants/routes';
-import { preloadImage } from '@/services/preload.service';
+import { useAppContext } from '@/contexts/app-context';
 import { colors } from '@/theme';
 import { formatCurrency } from '@/utils/format-currency';
 import { formatDate } from '@/utils/format-date';
@@ -15,6 +15,7 @@ import { CATEGORIES_MAP, isDepositType, type Transaction } from '../../domain/en
 
 export function TransactionListItem({ transaction }: { transaction: Transaction }) {
   const router = useRouter();
+  const { areValuesVisible } = useAppContext();
   const categoryLabel = transaction.categories_id ? CATEGORIES_MAP[transaction.categories_id] : undefined;
   const isDeposit = isDepositType(transaction.type);
 
@@ -22,10 +23,7 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
     <Pressable
       accessibilityRole="button"
       onPressIn={() => {
-        // Pré-carrega o comprovante e a tela de edição antecipadamente ao pressionar
-        if (transaction.receipt?.url) {
-          void preloadImage(transaction.receipt.url);
-        }
+        // Pré-carrega a tela de edição antecipadamente ao pressionar
         void import('./edit-transaction-screen');
       }}
       onPress={() => router.push({ pathname: ROUTES.MODALS.EDIT_TRANSACTION, params: { id: transaction.id } })}>
@@ -34,9 +32,15 @@ export function TransactionListItem({ transaction }: { transaction: Transaction 
           <Typography variant="body" className="flex-1" numberOfLines={1}>
             {transaction.description}
           </Typography>
-          <Typography variant="subtitle" className={isDeposit ? 'text-success-500' : undefined}>
+          <Typography
+            variant="subtitle"
+            className={
+              isDeposit
+                ? 'text-success-600 dark:text-success-400'
+                : 'text-danger-600 dark:text-danger-400'
+            }>
             {isDeposit ? '+' : '-'}
-            {formatCurrency(transaction.amount)}
+            {areValuesVisible ? formatCurrency(transaction.amount) : 'R$ ••••••'}
           </Typography>
         </View>
         <View className="flex-row items-center justify-between gap-2">

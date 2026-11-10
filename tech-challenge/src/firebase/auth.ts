@@ -85,7 +85,9 @@ export async function signUp(
   try {
     await firebaseSendEmailVerification(result.user);
   } catch (error) {
-    console.warn('[Auth] Não foi possível enviar e-mail de verificação automático:', error);
+    if (__DEV__) {
+      console.warn('[Auth] Não foi possível enviar e-mail de verificação automático:', error);
+    }
   }
 
   return result;
@@ -149,10 +151,25 @@ export function subscribeToAuthChanges(
 export async function resetPassword(
   email: string
 ): Promise<void> {
-  await sendPasswordResetEmail(
-    getAuthInstance(),
-    email
-  );
+  try {
+    await sendPasswordResetEmail(
+      getAuthInstance(),
+      email
+    );
+  } catch (error) {
+    // Defesa contra enumeração de usuários (OWASP ASVS):
+    // Caso o projeto Firebase não esteja com Email Enumeration Protection ativo e retorne
+    // 'auth/user-not-found', concluímos silenciosamente para que a UI não revele a inexistência.
+    if (
+      error != null &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code: string }).code === 'auth/user-not-found'
+    ) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export function getAuthErrorMessage(error: unknown): string {

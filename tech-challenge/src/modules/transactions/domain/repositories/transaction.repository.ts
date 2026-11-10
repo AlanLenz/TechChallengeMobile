@@ -1,6 +1,6 @@
 import type { Transaction, TransactionReceipt } from '../entities/transaction.entity';
 import type { TransactionFormValues } from '../entities/transaction.validation';
-import type { ReceiptFileInput } from '../../utils';
+import type { ReceiptFileInput } from '../rules/receipt.rules';
 
 export interface ITransactionRepository {
   getTransactions(userId: string): Promise<Transaction[]>;

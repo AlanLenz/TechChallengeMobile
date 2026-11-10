@@ -4,6 +4,7 @@ import { Animated, Platform, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
+import { useAppContext } from '@/contexts/app-context';
 import { formatCurrency } from '@/utils/format-currency';
 
 type StatCardProps = {
@@ -69,18 +70,21 @@ export function StatsGrid({
   biggestExpense,
   transactionCount,
 }: StatsGridProps) {
+  const { areValuesVisible } = useAppContext();
+  const maskedCurrency = 'R$ ••••••';
+
   return (
     <View className="gap-3">
       <View className="flex-row gap-3">
         <StatCard
           label="Entradas"
-          value={formatCurrency(totalIncome)}
+          value={areValuesVisible ? formatCurrency(totalIncome) : maskedCurrency}
           accent="success"
         />
 
         <StatCard
           label="Saídas"
-          value={formatCurrency(totalExpenses)}
+          value={areValuesVisible ? formatCurrency(totalExpenses) : maskedCurrency}
           accent="danger"
         />
       </View>
@@ -88,13 +92,13 @@ export function StatsGrid({
       <View className="flex-row gap-3">
         <StatCard
           label="Maior Despesa"
-          value={formatCurrency(biggestExpense)}
+          value={areValuesVisible ? formatCurrency(biggestExpense) : maskedCurrency}
           accent="neutral"
         />
 
         <StatCard
           label="Transações"
-          value={String(transactionCount)}
+          value={areValuesVisible ? String(transactionCount) : '••'}
           accent="neutral"
         />
       </View>

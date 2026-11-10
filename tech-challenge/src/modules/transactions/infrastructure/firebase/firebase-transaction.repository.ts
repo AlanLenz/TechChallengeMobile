@@ -11,20 +11,34 @@ import { deleteFile, getFileUrl, getStorageErrorMessage, uploadFile } from '@/fi
 
 import { getReceiptStoragePath } from '../../constants';
 import type { CategoryId, Transaction, TransactionReceipt } from '../../domain/entities/transaction.entity';
-import { randomFileSuffix, resolveReceiptMimeType, storedFileExtension, type ReceiptFileInput } from '../../utils';
+import {
+  resolveReceiptMimeType,
+  storedFileExtension,
+  type ReceiptFileInput,
+} from '../../domain/rules/receipt.rules';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
+import { decryptSensitiveText, encryptSensitiveText } from '@/utils/crypto';
 import { parseCurrencyToNumber } from '@/utils/mask';
 
 import type { ITransactionRepository } from '../../domain/repositories/transaction.repository';
+
+/** Sufixo aleatório curto para evitar colisão de nomes no Storage (sem dependência de uuid). */
+function randomFileSuffix(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
 
 function transactionsPath(userId: string): string {
   return `users/${userId}/${COLLECTIONS.TRANSACTIONS}`;
 }
 
-/** Campos de domínio da transação — sem `receiptFile`/`receipt`, tratados à parte. */
-function toDocumentData(input: TransactionFormValues) {
+/**
+ * Campos de domínio da transação persistidos no Firestore.
+ * A descrição (`description`) contém detalhes pessoais/financeiros sensíveis do lançamento e é
+ * criptografada em nível de aplicação (`enc:v1:...`) vinculada ao `userId` antes do envio.
+ */
+function toDocumentData(userId: string, input: TransactionFormValues) {
   return {
-    description: input.description.trim(),
+    description: encryptSensitiveText(input.description.trim(), userId),
     amount: parseCurrencyToNumber(input.amount),
     date: input.date,
     type: input.type,
@@ -32,29 +46,48 @@ function toDocumentData(input: TransactionFormValues) {
   };
 }
 
-export async function getTransactions(userId: string): Promise<Transaction[]> {
-  return queryCollection<Transaction>(transactionsPath(userId));
+/** Descriptografa de forma transparente os campos sensíveis de uma transação lida do Firestore. */
+function fromDocumentData(userId: string, transaction: Transaction): Transaction {
+  return {
+    ...transaction,
+    description: decryptSensitiveText(transaction.description, userId),
+    receipt: transaction.receipt
+      ? {
+          ...transaction.receipt,
+          name: decryptSensitiveText(transaction.receipt.name, userId),
+        }
+      : undefined,
+  };
 }
 
-export async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
-  return getDocument<Transaction>(transactionsPath(userId), id);
+async function getTransactions(userId: string): Promise<Transaction[]> {
+  const docs = await queryCollection<Transaction>(transactionsPath(userId));
+  return docs.map((doc) => fromDocumentData(userId, doc));
 }
 
-export async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
-  return addDocument(transactionsPath(userId), toDocumentData(input));
+async function getTransaction(userId: string, id: string): Promise<Transaction | null> {
+  const doc = await getDocument<Transaction>(transactionsPath(userId), id);
+  return doc ? fromDocumentData(userId, doc) : null;
 }
 
-export async function updateTransaction(
+async function createTransaction(userId: string, input: TransactionFormValues): Promise<string> {
+  return addDocument(transactionsPath(userId), toDocumentData(userId, input));
+}
+
+async function updateTransaction(
   userId: string,
   id: string,
   input: TransactionFormValues,
   receipt: TransactionReceipt | undefined,
   hadReceipt: boolean
 ): Promise<void> {
-  const data: Record<string, unknown> = toDocumentData(input);
+  const data: Record<string, unknown> = toDocumentData(userId, input);
 
   if (receipt) {
-    data.receipt = receipt;
+    data.receipt = {
+      ...receipt,
+      name: encryptSensitiveText(receipt.name, userId),
+    };
   } else if (hadReceipt) {
     // Comprovante removido pelo usuário — apaga o campo (o SDK não aceita `undefined`).
     data.receipt = deleteFieldValue();
@@ -63,7 +96,7 @@ export async function updateTransaction(
   return updateDocument(transactionsPath(userId), id, data);
 }
 
-export async function deleteTransaction(userId: string, id: string, receiptPath?: string): Promise<void> {
+async function deleteTransaction(userId: string, id: string, receiptPath?: string): Promise<void> {
   if (receiptPath) {
     await deleteTransactionReceipt(receiptPath);
   }
@@ -75,7 +108,7 @@ export async function deleteTransaction(userId: string, id: string, receiptPath?
  * Envia o arquivo ao Firebase Storage sob `users/{uid}/transactions/{id}/receipts/{nome-único}`
  * e devolve a referência a ser persistida na transação. Lança `Error` com mensagem de domínio.
  */
-export async function uploadTransactionReceipt(
+async function uploadTransactionReceipt(
   userId: string,
   transactionId: string,
   file: ReceiptFileInput
@@ -92,7 +125,7 @@ export async function uploadTransactionReceipt(
   try {
     await uploadFile(path, blob, {
       contentType,
-      customMetadata: { originalName: file.name },
+      customMetadata: { originalName: encryptSensitiveText(file.name, userId) },
     });
   } catch (error) {
     throw new Error(getStorageErrorMessage(error));
@@ -109,7 +142,7 @@ export async function uploadTransactionReceipt(
 }
 
 /** Remove um comprovante do Storage. Best-effort: uma falha aqui não deve travar o fluxo. */
-export async function deleteTransactionReceipt(path: string): Promise<void> {
+async function deleteTransactionReceipt(path: string): Promise<void> {
   try {
     await deleteFile(path);
   } catch {

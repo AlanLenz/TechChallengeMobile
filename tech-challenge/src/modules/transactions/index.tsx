@@ -15,13 +15,4 @@ export type {
 } from './domain/entities/transaction.entity';
 export { transactionFormSchema, validateDateRange } from './domain/entities/transaction.validation';
 export type { TransactionFormValues } from './domain/entities/transaction.validation';
-export {
-  createTransaction,
-  deleteTransaction,
-  deleteTransactionReceipt,
-  getTransaction,
-  getTransactions,
-  updateTransaction,
-  uploadTransactionReceipt,
-} from './infrastructure/firebase/firebase-transaction.repository';
 export { preloadTransactionReceipts, preloadTransactionsModule } from './preload';

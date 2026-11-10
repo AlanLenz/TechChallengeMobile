@@ -3,7 +3,7 @@ import '@/global.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,13 +14,14 @@ import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
 import { ConnectivityProvider } from '@/contexts/connectivity-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { ThemeProvider } from '@/contexts/theme-context';
-import { queryClient } from '@/services/query-client';
+import { BiometricLockScreen } from '@/modules/auth';
 import { TransactionsProvider } from '@/modules/transactions';
+import { queryClient } from '@/services/query-client';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
-  const { status } = useAuthContext();
+  const { status, isBiometricLocked } = useAuthContext();
   const [loaded] = useFonts({
     ...Ionicons.font,
   });
@@ -34,15 +35,19 @@ function RootNavigator() {
   // Pré-compilação em background dos gráficos assim que a autenticação é resolvida,
   // antes mesmo de a transição para as abas ser concluída.
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && !isBiometricLocked) {
       import('@/modules/home').then((m) => {
         void m.preloadHomeCharts();
       });
     }
-  }, [status]);
+  }, [status, isBiometricLocked]);
 
   // Mantém a splash nativa visível (ainda não escondida) enquanto o Firebase resolve a sessão.
   if (status === 'loading' || !loaded) return null;
+
+  if (status === 'authenticated' && isBiometricLocked) {
+    return <BiometricLockScreen />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

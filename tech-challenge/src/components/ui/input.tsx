@@ -1,15 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
-import { forwardRef, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { forwardRef, useState, type ComponentRef } from 'react';
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { cx } from '@/utils/cx';
+
+type InputRef = ComponentRef<typeof TextInput>;
 
 type InputProps = TextInputProps & {
   label?: string;
   error?: string;
 };
 
-export const Input = forwardRef<TextInput, InputProps>(function Input(
+export const Input = forwardRef<InputRef, InputProps>(function Input(
   { label, error, className, secureTextEntry, ...rest },
   ref
 ) {
@@ -23,12 +25,12 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       <View className="relative justify-center">
         <TextInput
           ref={ref}
-          placeholderTextColor="#9AA0AC"
+          placeholderTextColor="#60646C"
           secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
           className={cx(
             'rounded-xl border bg-white px-4 py-3 text-body text-neutral-900 dark:bg-neutral-900 dark:text-white',
             secureTextEntry ? 'pr-12' : '',
-            error ? 'border-danger-500' : 'border-neutral-200 dark:border-neutral-700',
+            error ? 'border-danger-500' : 'border-neutral-300 dark:border-neutral-700',
             className
           )}
           {...rest}
@@ -44,7 +46,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color="#9AA0AC"
+              color="#60646C"
             />
           </Pressable>
         ) : null}

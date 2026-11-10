@@ -3,6 +3,9 @@
 > Base arquitetural definitiva do app mobile (React Native + Expo), versão mobile do ByteBank
 > (referência web: Next.js + Tailwind + shadcn/ui + Firebase Auth).
 > Este documento é a fonte da verdade sobre como o projeto é organizado e por quê.
+>
+> **Estrutura interna dos modules (camadas domain/application/infrastructure/presentation):** ver
+> [`docs/architecture/clean-architecture.md`](architecture/clean-architecture.md), que prevalece sobre a seção 7 abaixo.
 
 ## Índice
 

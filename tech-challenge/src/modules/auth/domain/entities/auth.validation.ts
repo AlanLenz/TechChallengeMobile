@@ -9,7 +9,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    name: z.string().min(2, 'Informe seu nome completo.'),
+    name: z.string().trim().min(2, 'Informe seu nome completo.'),
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string().min(1, 'Confirme sua senha.'),

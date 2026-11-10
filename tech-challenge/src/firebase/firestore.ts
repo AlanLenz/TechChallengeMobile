@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  connectFirestoreEmulator,
   deleteDoc,
   deleteField,
   doc,
@@ -19,7 +20,7 @@ import {
   type WhereFilterOp,
 } from 'firebase/firestore';
 
-import { getFirebaseApp } from './config';
+import { getFirebaseApp, getFirebaseEmulatorHost, useFirebaseEmulators } from './config';
 
 let firestoreInstance: Firestore | undefined;
 
@@ -36,6 +37,9 @@ function getDb(): Firestore {
       // Firestore was already initialised on this app instance (e.g. after a
       // hot-module reload) — just grab the existing instance.
       firestoreInstance = getFirestore(app);
+    }
+    if (useFirebaseEmulators) {
+      connectFirestoreEmulator(firestoreInstance, getFirebaseEmulatorHost(), 8080);
     }
   }
 

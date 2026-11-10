@@ -16,6 +16,9 @@ module.exports = defineConfig([
     plugins: { boundaries },
     settings: {
       'boundaries/include': ['src/**/*.{ts,tsx}'],
+      'import/resolver': {
+        typescript: { project: './tsconfig.json' },
+      },
       // Modo "folder" (padrão, por isso omitido): cada pasta casada pelo pattern é UMA
       // instância de elemento — arquivos dentro dela podem se importar livremente entre si
       // (relação "internal"), só quem está fora precisa respeitar o entry-point.

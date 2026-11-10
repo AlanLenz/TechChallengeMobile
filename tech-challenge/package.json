@@ -56,6 +56,9 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:emulator-web": "node scripts/start-emulator-web.mjs",
+    "emulators": "npx --yes firebase-tools emulators:start --project demo-tech-challenge --only auth,firestore,storage",
+    "test:emulators": "npx --yes firebase-tools emulators:exec --project demo-tech-challenge --only auth,firestore,storage \"node --test tests/firebase-emulator.test.mjs\"",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",

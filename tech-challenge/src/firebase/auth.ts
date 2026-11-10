@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  connectAuthEmulator,
   getAuth,
   initializeAuth,
   onAuthStateChanged,
@@ -15,7 +16,7 @@ import {
 import { Platform } from 'react-native';
 
 import { secureStorage } from '@/services/storage.service';
-import { getFirebaseApp } from './config';
+import { getFirebaseApp, getFirebaseEmulatorHost, useFirebaseEmulators } from './config';
 
 export type { User };
 
@@ -38,9 +39,24 @@ function getAuthInstance(): Auth {
       } else {
         authInstance = getAuth(app);
       }
-    } catch {
+    } catch (error) {
+      if (
+        error == null ||
+        typeof error !== 'object' ||
+        !('code' in error) ||
+        error.code !== 'auth/already-initialized'
+      ) {
+        throw error;
+      }
+
       // Instância já inicializada previamente (HMR / Fast Refresh)
       authInstance = getAuth(app);
+    }
+
+    if (useFirebaseEmulators) {
+      connectAuthEmulator(authInstance, `http://${getFirebaseEmulatorHost()}:9099`, {
+        disableWarnings: true,
+      });
     }
   }
 
@@ -181,7 +197,7 @@ export function getAuthErrorMessage(error: unknown): string {
         'Operação não permitida.',
     };
 
-    return messages[code] ?? `Erro de autenticação (${code}).`;
+    return messages[code] ?? 'Não foi possível concluir a autenticação. Tente novamente.';
   }
 
   if (error instanceof Error) {

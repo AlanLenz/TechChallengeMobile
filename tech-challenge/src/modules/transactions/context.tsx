@@ -10,21 +10,19 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthContext } from '@/contexts/auth-context';
+
+import { CATEGORY_OPTIONS, TRANSACTIONS_QUERY_KEYS } from './constants';
 import {
-  CATEGORY_OPTIONS,
-  TRANSACTIONS_QUERY_KEYS,
   createTransaction as createTransactionService,
   deleteTransaction as deleteTransactionService,
   deleteTransactionReceipt,
   getTransactions,
-  isDepositType,
-  preloadTransactionReceipts,
   updateTransaction as updateTransactionService,
   uploadTransactionReceipt,
-  type Transaction,
-  type TransactionFormValues,
-  type TransactionReceipt,
-} from '@/modules/transactions';
+} from './infrastructure/firebase/firebase-transaction.repository';
+import { isDepositType, type Transaction, type TransactionReceipt } from './domain/entities/transaction.entity';
+import type { TransactionFormValues } from './domain/entities/transaction.validation';
+import { preloadTransactionReceipts } from './preload';
 
 export type CategoryBreakdownItem = {
   categoryId: number;
@@ -37,8 +35,6 @@ export type TransactionsContextValue = {
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
-
-  // Métricas calculadas globalmente
   balance: number;
   totalIncome: number;
   totalExpenses: number;
@@ -46,8 +42,6 @@ export type TransactionsContextValue = {
   transactionCount: number;
   recentTransactions: Transaction[];
   categoryBreakdown: CategoryBreakdownItem[];
-
-  // Ações CRUD
   createTransaction: (input: TransactionFormValues) => Promise<string>;
   updateTransaction: (
     id: string,
@@ -152,7 +146,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     });
   }, [queryClient, user]);
 
-  // Cálculos globais de totais e resumo
   const metrics = useMemo(() => {
     const deposits = transactions.filter((t) => isDepositType(t.type));
     const expenses = transactions.filter((t) => !isDepositType(t.type));
@@ -160,25 +153,23 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     const totalIncome = deposits.reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0);
     const balance = totalIncome - totalExpenses;
-
     const biggestExpense = expenses.length
       ? Math.max(...expenses.map((t) => t.amount))
       : 0;
-
     const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date));
     const recentTransactions = sorted.slice(0, 5);
 
     const categoryMap = new Map<number, number>();
-    for (const t of expenses) {
-      if (t.categories_id === undefined) continue;
-      const prev = categoryMap.get(t.categories_id) ?? 0;
-      categoryMap.set(t.categories_id, prev + t.amount);
+    for (const transaction of expenses) {
+      if (transaction.categories_id === undefined) continue;
+      const previous = categoryMap.get(transaction.categories_id) ?? 0;
+      categoryMap.set(transaction.categories_id, previous + transaction.amount);
     }
 
     const categoryBreakdown: CategoryBreakdownItem[] = Array.from(categoryMap.entries()).map(
       ([id, total]) => ({
         categoryId: id,
-        label: CATEGORY_OPTIONS.find((c) => c.value === id)?.label ?? 'Outros',
+        label: CATEGORY_OPTIONS.find((category) => category.value === id)?.label ?? 'Outros',
         total,
       })
     );
@@ -206,7 +197,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       deleteTransaction,
       refreshTransactions,
     }),
-    [transactions, isLoading, isRefreshing, error, metrics, createTransaction, updateTransaction, deleteTransaction, refreshTransactions]
+    [
+      transactions,
+      isLoading,
+      isRefreshing,
+      error,
+      metrics,
+      createTransaction,
+      updateTransaction,
+      deleteTransaction,
+      refreshTransactions,
+    ]
   );
 
   return (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '../../context';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
 
 export function useCreateTransaction() {
@@ -29,6 +29,5 @@ export function useCreateTransaction() {
     error,
   };
 }
-
 
 

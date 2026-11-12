@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTransactionsContext } from '@/contexts/transactions-context';
+import { useTransactionsContext } from '../../context';
 
 type DeleteTransactionArgs = {
   id: string;
@@ -36,5 +36,4 @@ export function useDeleteTransaction() {
     error,
   };
 }
-
 

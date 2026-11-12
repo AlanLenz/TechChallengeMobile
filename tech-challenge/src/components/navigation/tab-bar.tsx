@@ -4,8 +4,8 @@ import { colors } from '@/theme';
 export const tabBarScreenOptions = {
   headerShown: false,
   tabBarActiveTintColor: colors.primary[500],
-  tabBarInactiveTintColor: colors.neutral[400],
+  tabBarInactiveTintColor: colors.neutral[500],
   tabBarStyle: {
-    borderTopColor: colors.neutral[100],
+    borderTopColor: colors.neutral[200],
   },
 } as const;

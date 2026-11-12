@@ -1,8 +1,22 @@
 import { z } from 'zod';
 
-export const emailSchema = z.string().min(1, 'E-mail é obrigatório.').email('E-mail inválido.');
+export const emailSchema = z
+  .string()
+  .min(1, 'E-mail é obrigatório.')
+  .trim()
+  .toLowerCase()
+  .email('E-mail inválido.');
 
-export const passwordSchema = z.string().min(6, 'A senha precisa ter pelo menos 6 caracteres.');
+export const passwordSchema = z
+  .string()
+  .min(8, 'A senha precisa ter pelo menos 8 caracteres.')
+  .regex(/[a-z]/, 'A senha deve conter pelo menos uma letra minúscula.')
+  .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula.')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número.');
+
+export const loginPasswordSchema = z
+  .string()
+  .min(1, 'A senha é obrigatória.');
 
 export const cpfSchema = z
   .string()

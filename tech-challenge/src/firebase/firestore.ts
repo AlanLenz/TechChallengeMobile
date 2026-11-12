@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  connectFirestoreEmulator,
   deleteDoc,
   deleteField,
   doc,
@@ -14,12 +15,13 @@ import {
   updateDoc,
   where,
   type DocumentData,
+  type FirestoreError,
   type Firestore,
   type QueryConstraint,
   type WhereFilterOp,
 } from 'firebase/firestore';
 
-import { getFirebaseApp } from './config';
+import { getFirebaseApp, getFirebaseEmulatorHost, useFirebaseEmulators } from './config';
 
 let firestoreInstance: Firestore | undefined;
 
@@ -36,6 +38,9 @@ function getDb(): Firestore {
       // Firestore was already initialised on this app instance (e.g. after a
       // hot-module reload) — just grab the existing instance.
       firestoreInstance = getFirestore(app);
+    }
+    if (useFirebaseEmulators) {
+      connectFirestoreEmulator(firestoreInstance, getFirebaseEmulatorHost(), 8080);
     }
   }
 
@@ -166,5 +171,31 @@ export function subscribeToDocument<
           : null
       );
     }
+  );
+}
+
+/**
+ * Assina uma coleção em tempo real: `onData` recebe a lista completa a cada mudança (inclusive
+ * escritas locais ainda pendentes e o cache offline). Devolve a função que cancela a assinatura.
+ */
+export function subscribeToCollection<T extends DocumentData>(
+  path: string,
+  onData: (data: (T & { id: string })[]) => void,
+  onError: (error: FirestoreError) => void
+): () => void {
+  return onSnapshot(
+    collection(getDb(), path),
+    (snapshot) => {
+      onData(
+        snapshot.docs.map(
+          (documentSnapshot) =>
+            ({
+              id: documentSnapshot.id,
+              ...documentSnapshot.data(),
+            }) as T & { id: string }
+        )
+      );
+    },
+    onError
   );
 }

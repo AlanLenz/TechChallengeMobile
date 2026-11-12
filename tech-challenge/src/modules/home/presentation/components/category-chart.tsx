@@ -1,11 +1,11 @@
-import { PieChart } from 'react-native-gifted-charts';
+import { PieChart } from 'react-native-gifted-charts/dist/PieChart';
 import { View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
 
-// Fixed palette aligned to the 7 categories
-const PALETTE = ['#0d9488', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#f97316', '#a855f7'];
+// Fixed palette aligned to the 7 categories (tons escuros o suficiente para contraste com texto branco #fff)
+const PALETTE = ['#004D61', '#0d9488', '#0284c7', '#16a34a', '#d97706', '#ea580c', '#7c3aed'];
 
 type CategoryBreakdown = {
   categoryId: number;

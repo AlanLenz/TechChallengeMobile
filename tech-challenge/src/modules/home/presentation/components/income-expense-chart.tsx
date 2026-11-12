@@ -1,4 +1,4 @@
-import { BarChart } from 'react-native-gifted-charts';
+import { BarChart } from 'react-native-gifted-charts/dist/BarChart';
 import { View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
@@ -44,8 +44,8 @@ export function IncomeExpenseChart({ totalIncome, totalExpenses }: IncomeExpense
             hideRules
             xAxisThickness={1}
             yAxisThickness={0}
-            yAxisTextStyle={{ color: '#9aa0ac', fontSize: 11 }}
-            xAxisLabelTextStyle={{ color: '#9aa0ac', fontSize: 12 }}
+            yAxisTextStyle={{ color: '#454952', fontSize: 11 }}
+            xAxisLabelTextStyle={{ color: '#454952', fontSize: 12 }}
             noOfSections={4}
             maxValue={Math.max(totalIncome, totalExpenses) * 1.2 || 100}
             isAnimated

@@ -1,8 +1,11 @@
 import {
   createUserWithEmailAndPassword,
+  connectAuthEmulator,
   getAuth,
+  initializeAuth,
   onAuthStateChanged,
   reload,
+  sendEmailVerification as firebaseSendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -10,8 +13,10 @@ import {
   type Auth,
   type User,
 } from 'firebase/auth';
+import { Platform } from 'react-native';
 
-import { getFirebaseApp } from './config';
+import { secureStorage } from '@/services/storage.service';
+import { getFirebaseApp, getFirebaseEmulatorHost, useFirebaseEmulators } from './config';
 
 export type { User };
 
@@ -19,7 +24,40 @@ let authInstance: Auth | undefined;
 
 function getAuthInstance(): Auth {
   if (!authInstance) {
-    authInstance = getAuth(getFirebaseApp());
+    const app = getFirebaseApp();
+    try {
+      if (Platform.OS !== 'web') {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { getReactNativePersistence } = require('firebase/auth');
+        if (typeof getReactNativePersistence === 'function') {
+          authInstance = initializeAuth(app, {
+            persistence: getReactNativePersistence(secureStorage),
+          });
+        } else {
+          authInstance = getAuth(app);
+        }
+      } else {
+        authInstance = getAuth(app);
+      }
+    } catch (error) {
+      if (
+        error == null ||
+        typeof error !== 'object' ||
+        !('code' in error) ||
+        error.code !== 'auth/already-initialized'
+      ) {
+        throw error;
+      }
+
+      // Instância já inicializada previamente (HMR / Fast Refresh)
+      authInstance = getAuth(app);
+    }
+
+    if (useFirebaseEmulators) {
+      connectAuthEmulator(authInstance, `http://${getFirebaseEmulatorHost()}:9099`, {
+        disableWarnings: true,
+      });
+    }
   }
 
   return authInstance;
@@ -44,6 +82,14 @@ export async function signUp(
     displayName: name,
   });
 
+  try {
+    await firebaseSendEmailVerification(result.user);
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[Auth] Não foi possível enviar e-mail de verificação automático:', error);
+    }
+  }
+
   return result;
 }
 
@@ -60,6 +106,15 @@ export async function signIn(
 
 export async function signOut(): Promise<void> {
   await firebaseSignOut(getAuthInstance());
+}
+
+export async function sendVerificationEmail(): Promise<void> {
+  const user = getAuthInstance().currentUser;
+  if (!user) {
+    throw new Error('Nenhum usuário autenticado.');
+  }
+
+  await firebaseSendEmailVerification(user);
 }
 
 export async function updateCurrentUserProfile(
@@ -96,10 +151,25 @@ export function subscribeToAuthChanges(
 export async function resetPassword(
   email: string
 ): Promise<void> {
-  await sendPasswordResetEmail(
-    getAuthInstance(),
-    email
-  );
+  try {
+    await sendPasswordResetEmail(
+      getAuthInstance(),
+      email
+    );
+  } catch (error) {
+    // Defesa contra enumeração de usuários (OWASP ASVS):
+    // Caso o projeto Firebase não esteja com Email Enumeration Protection ativo e retorne
+    // 'auth/user-not-found', concluímos silenciosamente para que a UI não revele a inexistência.
+    if (
+      error != null &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code: string }).code === 'auth/user-not-found'
+    ) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export function getAuthErrorMessage(error: unknown): string {
@@ -115,34 +185,36 @@ export function getAuthErrorMessage(error: unknown): string {
         'E-mail inválido.',
 
       'auth/user-disabled':
-        'Esta conta foi desativada.',
+        'Esta conta foi desativada temporariamente.',
 
+      // Defesa contra enumeração de usuários (OWASP ASVS):
+      // Mensagem unificada para usuário não encontrado e senha incorreta
       'auth/user-not-found':
-        'Usuário não encontrado.',
+        'E-mail ou senha incorretos.',
 
       'auth/wrong-password':
-        'Senha incorreta.',
+        'E-mail ou senha incorretos.',
+
+      'auth/invalid-credential':
+        'E-mail ou senha incorretos.',
 
       'auth/email-already-in-use':
         'Este e-mail já está em uso.',
 
       'auth/weak-password':
-        'A senha deve ter pelo menos 6 caracteres.',
+        'A senha é muito fraca. Deve ter pelo menos 8 caracteres e incluir letras maiúsculas, minúsculas e números.',
 
       'auth/network-request-failed':
         'Erro de rede. Verifique sua conexão.',
 
       'auth/too-many-requests':
-        'Muitas tentativas. Tente novamente mais tarde.',
+        'Muitas tentativas sem sucesso. Por segurança, aguarde alguns instantes antes de tentar novamente.',
 
       'auth/operation-not-allowed':
         'Operação não permitida.',
-
-      'auth/invalid-credential':
-        'E-mail ou senha incorretos.',
     };
 
-    return messages[code] ?? `Erro de autenticação (${code}).`;
+    return messages[code] ?? 'Não foi possível concluir a autenticação. Tente novamente.';
   }
 
   if (error instanceof Error) {
@@ -151,4 +223,3 @@ export function getAuthErrorMessage(error: unknown): string {
 
   return 'Ocorreu um erro inesperado.';
 }
-

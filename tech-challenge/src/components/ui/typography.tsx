@@ -9,7 +9,7 @@ const VARIANT_CLASSES: Record<TypographyVariant, string> = {
   title: 'text-title font-bold text-neutral-900 dark:text-white',
   subtitle: 'text-subtitle font-semibold text-neutral-900 dark:text-white',
   body: 'text-body text-neutral-900 dark:text-white',
-  small: 'text-small text-neutral-500 dark:text-neutral-400',
+  small: 'text-small text-neutral-600 dark:text-neutral-300',
 };
 
 type TypographyProps = TextProps & { variant?: TypographyVariant };

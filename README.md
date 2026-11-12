@@ -125,17 +125,37 @@ npx expo start
 
 # 🔐 Autenticação
 
-A autenticação da aplicação é realizada utilizando o **Firebase Authentication**.
+A autenticação da aplicação é realizada utilizando o **Firebase Authentication**, combinada com recursos nativos de segurança do dispositivo e boas práticas de arquitetura (OWASP ASVS):
 
 O fluxo contempla:
 
-* Login do usuário;
-* Cadastro de usuário;
-* Manutenção da sessão autenticada;
-* Encerramento da sessão;
-* Proteção das áreas que dependem de autenticação.
+* **Login e Cadastro de Usuário** com validação via **Zod** e **React Hook Form**;
+* **Política de Senhas Fortes**: exigência de no mínimo 8 caracteres contendo ao menos uma letra maiúscula, uma minúscula e um número no cadastro;
+* **Confirmação de Senha**: prevenção contra erros de digitação durante o cadastro (`confirmPassword`);
+* **Alternância de Visibilidade**: controle de exibição de senha (mostrar/ocultar senha com ícone de olho) para melhor usabilidade e precisão no preenchimento;
+* **Sanitização de Dados**: normalização automática de e-mails com remoção de espaços acidentais e conversão para minúsculas (`trim` e `toLowerCase`);
+* **Defesa contra Enumeração de Usuários (OWASP)**: mensagens de erro unificadas ("E-mail ou senha incorretos") no login e tratamento silencioso na recuperação de senha, impedindo que atacantes descubram se um e-mail já está cadastrado na base;
+* **Persistência Segura de Sessão Criptografada**: persistência configurada via `expo-secure-store` (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`) e `getReactNativePersistence`, utilizando armazenamento criptografado por hardware no Keychain (iOS) e Keystore (Android) com particionamento transparente de tokens (chunking de 1800 bytes);
+* **Autenticação Biométrica (Face ID / Touch ID / Impressão Digital)**: bloqueio automático via `expo-local-authentication` (`src/services/biometric.service.ts`) ao abrir ou retomar o aplicativo em segundo plano quando há uma sessão ativa, protegendo o acesso aos dados financeiros antes da exibição do Dashboard (configurável na tela de Perfil);
+* **Verificação de E-mail**: disparo de e-mail de confirmação no cadastro e acompanhamento de status na tela de Perfil (com opção de reenvio);
+* **Proteção de Rotas com Expo Router**: proteção por camadas através de `Stack.Protected` e guarda biométrica (`BiometricLockScreen`), garantindo que tanto as abas principais `(tabs)` quanto as rotas modais `(modals)` só possam ser acessadas por usuários autenticados e desbloqueados;
+* **Limpeza Segura de Memória no Logout**: remoção integral do cache em memória do React Query (`queryClient.clear()`) ao encerrar a sessão ou trocar de usuário;
+* **Regras de Segurança no Cloud Firestore (`firestore.rules`) e Storage (`storage.rules`)**: isolamento rigoroso por usuário (`request.auth.uid == userId`) para subcoleções de transações (`users/{userId}/transactions/{transactionId}`) e perfis, restrição estrita a URLs `https://`, validação de esquemas, tipos, limites de valor e verificação de MIME types e tamanho para anexos e avatares.
 
-O contexto de autenticação centraliza o acesso às informações do usuário e permite que as telas consultem o estado atual da sessão.
+---
+
+# 🛡️ Proteção e Criptografia de Dados Sensíveis (Fase 4)
+
+Foram identificados todos os dados sensíveis manipulados pela aplicação e aplicados mecanismos de defesa em profundidade (em repouso, em trânsito, em memória e em exibição):
+
+| Dado Sensível Identificado | Onde é Manipulado | Mecanismo de Proteção Aplicado |
+|---|---|---|
+| **Tokens de Sessão (`accessToken`, `refreshToken`)** | `src/services/storage.service.ts` + `src/firebase/auth.ts` | Criptografia em repouso por hardware via **`expo-secure-store`** (Keychain no iOS / Keystore AES-256 no Android) com política `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, sanitização de chaves e particionamento em chunks de 1800 bytes. |
+| **Senhas de Acesso** | `src/modules/auth/` + `src/components/ui/input.tsx` | Nunca persistidas localmente; mascaramento visual (`secureTextEntry`); validação forte (mín. 8 caracteres, maiúscula, minúscula e número); tráfego exclusivo via TLS/HTTPS. |
+| **Descrições de Transações e Nomes de Comprovantes** | `src/utils/crypto.ts` + `firebase-transaction.repository.ts` | **Criptografia Simétrica Autenticada em Nível de Aplicação (`enc:v1:<iv>:<mac>:<ciphertext>`)** antes da gravação no Firestore e nos metadados do Storage, com chave derivada por usuário (`userId`), IV aleatório de 64 bits por registro e verificação de integridade (MAC). |
+| **Saldos, Entradas, Saídas e Valores de Transações** | `src/contexts/app-context.tsx` + `HeroCard`, `StatsGrid`, `RecentTransactionsList`, `TransactionListItem` | **Modo de Privacidade Global** (`areValuesVisible`) sincronizado em todo o app (ocultando saldo, cards de estatísticas e valores nas listas com `R$ ••••••`), além de não persistência em disco local e limpeza total de memória (`queryClient.clear()`) no logout. |
+| **Dados Pessoais (E-mail / PII)** | `src/modules/profile/` + `src/utils/crypto.ts` | Mascaramento parcial por padrão na tela de Perfil (`maskEmailAddress`, ex.: `fe••••03@gmail.com`) com revelação sob demanda, sanitização na entrada e proteção contra enumeração de contas no login e na redefinição de senha. |
+| **Anexos de Comprovantes (Imagens / PDF)** | `storage.rules` + `firestore.rules` + `receipt.rules.ts` | Caminhos randômicos isolados por UID (`users/{userId}/transactions/{id}/receipts/...`), validação estrita de MIME type (`image/jpeg`, `image/png`, `image/webp`, `application/pdf`), limite de 5 MB e exigência de URLs `https://`. |
 
 ---
 
@@ -305,7 +325,7 @@ A aplicação também possui uma estrutura de tema para centralizar valores util
 
 ---
 
-# 🔄 Carregamento e estados
+# 🔄 Carregamento, Lazy Loading e Pré-carregamento
 
 O Dashboard possui tratamento para diferentes estados da requisição dos dados.
 
@@ -320,6 +340,32 @@ Loading
 ### Dados carregados
 
 Quando os dados são carregados corretamente, o Dashboard apresenta os cards, gráficos e transações recentes.
+
+### ⚡ Lazy Loading e Estratégias de Pré-carregamento (Preloading)
+
+Para otimizar o tempo de inicialização e a fluidez da navegação, a aplicação combina **Lazy Loading** com **estratégias ativas de pré-carregamento**:
+
+1. **Lazy Loading com `lazyWithPreload` (`src/utils/lazy-with-preload.ts`)**:
+   - Os componentes de gráficos (`CategoryChart` e `IncomeExpenseChart`), que dependem de bibliotecas com maior peso (`react-native-gifted-charts`), são carregados sob demanda através do utilitário `lazyWithPreload`.
+   - Isso desacopla o carregamento inicial da tela principal do bundle de renderização dos gráficos.
+
+2. **Pré-carregamento Antecipado de Componentes (`preloadHomeCharts`)**:
+   - Assim que o `HomeScreen` ou o layout de abas é montado, a função `preloadHomeCharts()` inicia a importação dos módulos em segundo plano.
+   - Quando as métricas financeiras concluem a busca ou o usuário rola a tela até os gráficos, os componentes já estão carregados na memória do JavaScript, eliminando qualquer atraso visual ou spinner de Suspense.
+
+3. **Pré-carregamento por Intenção de Navegação (`onPressIn`)**:
+   - Em botões e itens navegáveis (como o Floating Action Button `+` para criação de transações e cada item na lista de transações), o evento `onPressIn` (toque inicial/touch-down) dispara imediatamente o pré-carregamento do módulo e dos recursos da tela de destino antes mesmo do disparo de `onPress` (liberação do toque).
+   - Esse ganho de 100ms a 300ms de antecipação torna a abertura de modais e telas instantânea.
+
+4. **Pré-carregamento de Imagens e Comprovantes (`src/services/preload.service.ts`)**:
+   - O serviço centraliza o pré-carregamento de mídia através de `Image.prefetch` do `expo-image` com política `memory-disk`.
+   - O avatar do usuário autenticado e as imagens de comprovantes anexados às últimas transações são pré-carregados automaticamente no cache nativo do dispositivo logo após a listagem ser obtida do Firestore.
+
+5. **Pré-carregamento Cooperativo em Tempo Ocioso (`preloadIdle`)**:
+   - No `TabsLayout` (`src/app/(tabs)/_layout.tsx`), as abas secundárias (`Transações` e `Perfil`) têm seus módulos pré-carregados cooperativamente durante o tempo ocioso da thread principal, garantindo transições suaves a 60 FPS.
+
+6. **Listeners de Navegação nas Abas (`tabPress`)**:
+   - As abas do Expo Router contam com listeners no evento `tabPress` para antecipar o carregamento dos módulos de cada rota antes da conclusão da transição visual.
 
 ---
 

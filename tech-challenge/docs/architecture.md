@@ -3,6 +3,9 @@
 > Base arquitetural definitiva do app mobile (React Native + Expo), versão mobile do ByteBank
 > (referência web: Next.js + Tailwind + shadcn/ui + Firebase Auth).
 > Este documento é a fonte da verdade sobre como o projeto é organizado e por quê.
+>
+> **Estrutura interna dos modules (camadas domain/application/infrastructure/presentation):** ver
+> [`docs/architecture/clean-architecture.md`](architecture/clean-architecture.md), que prevalece sobre a seção 7 abaixo.
 
 ## Índice
 
@@ -129,6 +132,7 @@ tech-challenge/
     │
     ├── services/                           # camada de serviços cross-cutting
     │   ├── query-client.ts
+    │   ├── preload.service.ts
     │   └── storage.service.ts
     │
     ├── firebase/                           # único ponto de contato com o Firebase SDK
@@ -281,6 +285,11 @@ Firebase (Firestore / Auth / Storage)
 - **Estado de servidor** (dados que vêm do Firestore/Auth/Storage): sempre via
   `@tanstack/react-query`, dentro de hooks do próprio module (`use-accounts.ts`,
   `use-transfers.ts`). Nunca duplicado em Context ou `useState` manual.
+- **Cache de servidor:** mantido em memória pelo React Query e separado por usuário nas query
+  keys. A lista de transações fica fresca por 30 segundos; queries sem política específica usam
+  o padrão de 60 segundos. Mutations invalidam a lista afetada, e a troca/logout de usuário
+  remove as queries associadas à sessão anterior. Dados financeiros não são persistidos no
+  armazenamento local.
 - **Estado de cliente/UI compartilhado** entre módulos: Context API (sessão, tema,
   conectividade, notificações).
 - **Estado local de tela**: `useState`/`useReducer` dentro do próprio componente — não sobe
@@ -426,6 +435,8 @@ Exemplo: adicionar a feature "Investimentos".
 - Nenhum `console.log` ou dado sensível (token, saldo, CPF) em logs de produção.
 - Cada PR que adiciona uma feature nova deve vir com seu module completo (não fatiar um module
   entre vários PRs incompletos).
+- Componentes pesados (gráficos) devem usar lazy loading (`lazyWithPreload`) e estratégias de pré-carregamento antecipado em segundo plano e na intenção de navegação (`onPressIn` / `tabPress`).
+- Imagens de mídia (comprovantes e avatar) devem ser pré-carregadas via `preload.service.ts` no cache nativo (`memory-disk`) para renderização instantânea.
 
 ---
 

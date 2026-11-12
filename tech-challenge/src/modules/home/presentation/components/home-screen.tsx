@@ -1,28 +1,46 @@
-import { lazy, Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { ScrollView, View, ActivityIndicator } from 'react-native';
+import { ScrollView } from 'react-native';
 
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
 import { ScreenContainer } from '@/components/layout/screen-container';
+import { Button } from '@/components/ui/button';
 import { FloatingActionButton } from '@/components/ui/fab';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
+import { preloadTransactionsModule } from '@/modules/transactions';
+import { lazyWithPreload } from '@/utils/lazy-with-preload';
 
 import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { AnimatedHeroCard } from './animated-hero-card';
+import { ChartSkeleton } from './chart-skeleton';
 import { RecentTransactionsList } from './recent-transactions-list';
 import { StatsGrid } from './stats-grid';
 
-const CategoryChart = lazy(() => import('./category-chart').then(m => ({ default: m.CategoryChart })));
-const IncomeExpenseChart = lazy(() => import('./income-expense-chart').then(m => ({ default: m.IncomeExpenseChart })));
+export const DashboardCharts = lazyWithPreload(() =>
+  import('./dashboard-charts').then((m) => ({ default: m.DashboardCharts }))
+);
+
+export function preloadHomeCharts(): Promise<unknown> {
+  return DashboardCharts.preload();
+}
+
+// Inicia o pré-carregamento imediato no momento em que o módulo da Home é importado,
+// garantindo que o bundle do gráfico seja compilado e mantido em cache antes da navegação.
+void preloadHomeCharts();
 
 export function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthContext();
-  const { data: stats, isPending, isError } = useHomeDashboard();
+  const { data: stats, isPending, isError, refetch } = useHomeDashboard();
 
   const firstName = (user?.displayName ?? user?.email ?? 'Usuário').split(' ')[0];
+
+  useEffect(() => {
+    // Garante que o pré-carregamento foi disparado
+    void preloadHomeCharts();
+  }, []);
 
   if (isPending) {
     return (
@@ -34,12 +52,13 @@ export function HomeScreen() {
 
   if (isError || !stats) {
     return (
-      <ScreenContainer className="justify-center">
+      <ScreenContainer className="justify-center gap-4">
         <EmptyState
           icon="alert-circle-outline"
           title="Erro ao carregar"
-          description="Não foi possível carregar o dashboard. Tente novamente."
+          description="Não foi possível carregar seus dados financeiros. Verifique a conexão e tente novamente."
         />
+        <Button label="Tentar novamente" variant="secondary" onPress={() => void refetch()} />
       </ScreenContainer>
     );
   }
@@ -51,9 +70,9 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AnimatedHeroCard
-  firstName={firstName}
-  balance={stats.totalBalance}
-/>
+          firstName={firstName}
+          balance={stats.totalBalance}
+        />
         <StatsGrid
           totalIncome={stats.totalIncome}
           totalExpenses={stats.totalExpenses}
@@ -61,23 +80,23 @@ export function HomeScreen() {
           transactionCount={stats.transactionCount}
         />
 
-        <View className="gap-4">
-          <Suspense fallback={<ActivityIndicator size="large" className="my-10" color="#0d9488" />}>
-            <IncomeExpenseChart
-              totalIncome={stats.totalIncome}
-              totalExpenses={stats.totalExpenses}
-            />
-            <CategoryChart data={stats.categoryBreakdown} />
-          </Suspense>
-        </View>
+        <Suspense fallback={<ChartSkeleton />}>
+          <DashboardCharts
+            totalIncome={stats.totalIncome}
+            totalExpenses={stats.totalExpenses}
+            categoryBreakdown={stats.categoryBreakdown}
+          />
+        </Suspense>
 
         <RecentTransactionsList transactions={stats.recentTransactions} />
       </ScrollView>
       <FloatingActionButton
         accessibilityLabel="Adicionar transação"
+        onPressIn={() => {
+          void preloadTransactionsModule();
+        }}
         onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
       />
     </ScreenContainer>
   );
 }
-

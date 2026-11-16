@@ -23,11 +23,11 @@ O projeto foi desenvolvido utilizando:
 
 ### Versões principais
 
-* Node.js: `20.20.2`
-* Expo: `57.0.18`
-* React Native: `0.86.3`
-* React: `19.2.3`
-* React Native Reanimated: `4.5.1`
+* Node.js: `22.13.0` ou superior
+* Expo: `58`
+* React Native: `0.88.1`
+* React: `19.3.0`
+* React Native Reanimated: `4.7.1`
 * NativeWind: `4.2.6`
 
 ---
@@ -82,12 +82,11 @@ A organização busca separar responsabilidades entre telas, componentes reutili
 
 Antes de executar o projeto, é necessário ter instalado:
 
-* Node.js
+* Node.js `22.13.0` ou superior
 * npm
-* Expo CLI / Expo
 * Android Studio, caso seja utilizado um emulador Android
 
-Também é possível executar a aplicação utilizando o **Expo Go**, quando compatível com a configuração atual do projeto.
+Não é necessário instalar o Expo CLI globalmente. O projeto usa o Expo fornecido pelas dependências locais.
 
 ---
 
@@ -111,15 +110,42 @@ Instale as dependências:
 npm install
 ```
 
+Configure o Firebase: copie `tech-challenge/.env.example` para `tech-challenge/.env` e preencha as variáveis com as credenciais do seu app no Firebase Console. Sem essa configuração, a interface pode iniciar, mas recursos que acessam o Firebase não funcionarão.
+
 ---
 
 ## ▶️ Executando o projeto
 
-Inicie o servidor do Expo:
+Na pasta `tech-challenge`, inicie o servidor:
 
 ```bash
-npx expo start
+npm start
 ```
+
+Escaneie o QR code com o **Expo Go** no celular ou pressione `a` para abrir no emulador Android. Para usar um dispositivo físico, computador e celular devem estar acessíveis na mesma rede local.
+
+Outras opções:
+
+```bash
+npm run android # inicia no emulador Android
+npm run web     # inicia a versão web
+```
+
+### Firebase Emulators
+
+Para executar o app Web isolado dos serviços Firebase de produção, abra dois terminais na pasta `tech-challenge`. No primeiro, inicie os emuladores:
+
+```bash
+npm run emulators
+```
+
+No segundo, inicie a versão Web já configurada para apontar para os emuladores locais:
+
+```bash
+npm run start:emulator-web
+```
+
+Os emuladores usam o projeto de demonstração `demo-tech-challenge` e as portas configuradas em `tech-challenge/firebase.json`. Não use essa configuração em produção.
 
 ---
 
@@ -181,19 +207,19 @@ O Dashboard possui:
 
 * Saldo total;
 * Card principal com identificação do usuário;
-* Total de entradas;
-* Total de saídas;
-* Maior despesa;
-* Quantidade de transações;
+* Filtro dos indicadores por **Este mês** (padrão), **30 dias** ou **Todo o período**;
+* Total de entradas e saídas, maior despesa e quantidade de transações para o período selecionado;
 * Gráfico de entradas e despesas;
 * Gráfico de distribuição por categoria;
 * Lista de transações recentes;
 * Botão de ação para adicionar uma nova transação.
 
+O saldo e a lista de transações recentes continuam representando o histórico geral, independentemente do período selecionado. Os indicadores e os gráficos acompanham o filtro.
+
 A estrutura principal do Dashboard está localizada em:
 
 ```text
-src/modules/home/
+tech-challenge/src/modules/home/
 ```
 
 ---
@@ -439,22 +465,37 @@ Essa organização facilita a manutenção e permite que componentes e regras de
 
 # 📦 Principais comandos
 
+Execute os comandos abaixo a partir da pasta `tech-challenge`.
+
 Instalar dependências:
 
 ```bash
 npm install
 ```
 
-Iniciar o projeto:
+Iniciar o app no Expo:
 
 ```bash
-npx expo start
+npm start
 ```
 
-Verificar o projeto:
+Executar testes do filtro de período do Dashboard:
 
 ```bash
-npx expo doctor
+npm run test:dashboard
+```
+
+Executar testes de integração com Firebase Emulators (iniciam e encerram os emuladores automaticamente):
+
+```bash
+npm run test:emulators
+```
+
+Verificar lint e tipos:
+
+```bash
+npm run lint
+npx tsc --noEmit
 ```
 
 ---
@@ -469,6 +510,7 @@ Atualmente, a aplicação mobile contempla os principais fluxos de:
 * [x] Dashboard financeiro
 * [x] Visualização do saldo
 * [x] Visualização de entradas e despesas
+* [x] Filtro de período dos indicadores e gráficos do Dashboard
 * [x] Estatísticas financeiras
 * [x] Gráficos financeiros
 * [x] Visualização de transações recentes

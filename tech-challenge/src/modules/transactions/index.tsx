@@ -6,6 +6,7 @@ export { TransactionsProvider, useTransactionsContext } from './context';
 export type { CategoryBreakdownItem, TransactionsContextValue } from './context';
 export { CATEGORY_OPTIONS, TRANSACTIONS_QUERY_KEYS, TRANSACTION_TYPE_OPTIONS } from './constants';
 export { CATEGORIES_MAP, isDepositType } from './domain/entities/transaction.entity';
+export { calculateTransactionMetrics } from './domain/services/transaction-metrics.service';
 export type {
   CategoryId,
   Transaction,

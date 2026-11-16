@@ -1,28 +1,35 @@
-import { useTransactionsContext } from '@/modules/transactions';
+import {
+  calculateTransactionMetrics,
+  useTransactionsContext,
+} from '@/modules/transactions';
 import type { DashboardStats } from '../../domain/entities/home.entity';
+import {
+  filterTransactionsByPeriod,
+  type DashboardPeriod,
+} from '../../domain/services/dashboard-period.service';
 
-export function useHomeDashboard() {
+export function useHomeDashboard(period: DashboardPeriod) {
   const {
+    transactions,
     balance: totalBalance,
-    totalIncome,
-    totalExpenses,
-    biggestExpense,
-    transactionCount,
     recentTransactions,
-    categoryBreakdown,
     isLoading,
     error,
     refreshTransactions,
   } = useTransactionsContext();
 
+  const periodMetrics = calculateTransactionMetrics(
+    filterTransactionsByPeriod(transactions, period)
+  );
+
   const data: DashboardStats = {
     totalBalance,
-    totalIncome,
-    totalExpenses,
-    biggestExpense,
-    transactionCount,
+    totalIncome: periodMetrics.totalIncome,
+    totalExpenses: periodMetrics.totalExpenses,
+    biggestExpense: periodMetrics.biggestExpense,
+    transactionCount: periodMetrics.transactionCount,
     recentTransactions,
-    categoryBreakdown,
+    categoryBreakdown: periodMetrics.categoryBreakdown,
   };
 
   return {
@@ -33,4 +40,3 @@ export function useHomeDashboard() {
     refetch: refreshTransactions,
   };
 }
-

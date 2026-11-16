@@ -20,6 +20,15 @@ import { getFirebaseApp } from './config';
 export type { User };
 
 let authInstance: Auth | undefined;
+let lastManualAuthTimestamp = 0;
+
+export function consumeManualAuthFlag(windowMs = 10_000): boolean {
+  if (Date.now() - lastManualAuthTimestamp < windowMs) {
+    lastManualAuthTimestamp = 0;
+    return true;
+  }
+  return false;
+}
 
 function getAuthInstance(): Auth {
   if (!authInstance) {
@@ -56,6 +65,7 @@ export async function signUp(
   email: string,
   password: string
 ) {
+  lastManualAuthTimestamp = Date.now();
   const result = await createUserWithEmailAndPassword(
     getAuthInstance(),
     email,
@@ -63,8 +73,9 @@ export async function signUp(
   );
 
   await updateProfile(result.user, {
-    displayName: name,
+    displayName: name.trim(),
   });
+  lastManualAuthTimestamp = Date.now();
 
   try {
     await firebaseSendEmailVerification(result.user);
@@ -81,6 +92,7 @@ export async function signIn(
   email: string,
   password: string
 ) {
+  lastManualAuthTimestamp = Date.now();
   return signInWithEmailAndPassword(
     getAuthInstance(),
     email,

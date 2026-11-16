@@ -13,6 +13,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { isEnvValid } from '@/config/env';
 import {
+  consumeManualAuthFlag,
   reloadCurrentUser,
   resetPassword as firebaseResetPassword,
   sendVerificationEmail as firebaseSendVerificationEmail,
@@ -163,7 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Se a sessão foi restaurada automaticamente ao abrir o app (não veio de signIn/signUp manual),
         // bloqueia o acesso até a confirmação biométrica.
-        if (shouldLock && !justAuthenticatedWithCredentialsRef.current) {
+        const wasManualAuth = justAuthenticatedWithCredentialsRef.current || consumeManualAuthFlag();
+        if (shouldLock && !wasManualAuth) {
           setIsBiometricLocked(true);
         } else {
           justAuthenticatedWithCredentialsRef.current = false;
@@ -239,7 +241,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendVerificationEmail: firebaseSendVerificationEmail,
       refreshUser: async () => {
         const refreshed = await reloadCurrentUser();
-        setUser(refreshed);
+        setUser(
+          refreshed
+            ? (Object.assign(Object.create(Object.getPrototypeOf(refreshed)), refreshed) as User)
+            : null
+        );
       },
     }),
     [

@@ -94,7 +94,11 @@ export function RegisterForm() {
         </Typography>
       ) : null}
       <Button label="Criar conta" onPress={onSubmit} loading={register.isPending} />
-      <Button label="Já tenho conta" variant="ghost" onPress={() => router.push(ROUTES.AUTH.LOGIN)} />
+      <Button
+        label="Já tenho conta"
+        variant="ghost"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace(ROUTES.AUTH.LOGIN))}
+      />
     </View>
   );
 }

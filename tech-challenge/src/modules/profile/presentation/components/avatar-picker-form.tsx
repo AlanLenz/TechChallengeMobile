@@ -39,15 +39,17 @@ export function AvatarPickerForm() {
   };
 
   return (
-    <View className="items-center gap-6">
+    <View className="items-center gap-6 px-screen-x">
       <Avatar name={name || 'Usuário'} photoUrl={pickedUri ?? photoUrl} size={96} />
-      <Button label="Escolher foto" variant="secondary" onPress={pickImage} />
       {updateAvatar.isError ? (
         <Typography variant="small" className="text-danger-500">
           Não foi possível atualizar a foto.
         </Typography>
       ) : null}
-      <Button label="Salvar" onPress={onSave} loading={updateAvatar.isPending} disabled={!pickedUri} />
+      <View className="w-full gap-3">
+        <Button label="Escolher foto" variant="secondary" onPress={pickImage} />
+        <Button label="Salvar" onPress={onSave} loading={updateAvatar.isPending} disabled={!pickedUri} />
+      </View>
     </View>
   );
 }

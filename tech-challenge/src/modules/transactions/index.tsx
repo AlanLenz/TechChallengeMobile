@@ -14,6 +14,7 @@ export type {
 export { transactionFormSchema, validateDateRange } from './domain/entities/transaction.validation';
 export type { TransactionFormValues } from './domain/entities/transaction.validation';
 export { TransactionsProvider, useTransactionsContext } from './presentation/context/transactions-context';
+export { calculateTransactionMetrics } from './domain/services/transaction-metrics.service';
 export type { CategoryBreakdownItem } from './domain/services/transaction-metrics.service';
 
 export { preloadTransactionsModule } from './presentation/preload-module';

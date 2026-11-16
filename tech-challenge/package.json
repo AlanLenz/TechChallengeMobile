@@ -57,6 +57,7 @@
   },
   "scripts": {
     "start": "expo start",
+    "test:dashboard": "node --test tests/dashboard-period.test.mjs",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",

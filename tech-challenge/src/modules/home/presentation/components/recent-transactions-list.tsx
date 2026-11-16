@@ -43,7 +43,17 @@ export function RecentTransactionsList({ transactions }: RecentTransactionsListP
               : undefined;
 
             return (
-              <View key={t.id} className="flex-row items-start justify-between">
+              <Pressable
+                key={t.id}
+                accessibilityRole="button"
+                onPressIn={() => {
+                  void preloadTransactionsModule();
+                }}
+                onPress={() =>
+                  router.push({ pathname: ROUTES.MODALS.EDIT_TRANSACTION, params: { id: t.id } })
+                }
+                className="flex-row items-start justify-between rounded-lg active:opacity-70"
+              >
                 <View className="flex-1 gap-0.5">
                   <Typography variant="body" className="font-medium" numberOfLines={1}>
                     {t.description}
@@ -67,7 +77,7 @@ export function RecentTransactionsList({ transactions }: RecentTransactionsListP
                     {areValuesVisible ? formatCurrency(t.amount) : 'R$ ••••••'}
                   </Typography>
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>

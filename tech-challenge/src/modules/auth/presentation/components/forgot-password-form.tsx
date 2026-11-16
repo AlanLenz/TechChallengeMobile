@@ -25,11 +25,9 @@ export function ForgotPasswordForm() {
     defaultValues: AUTH_FORM_DEFAULTS.forgotPassword,
   });
 
-  const onSubmit = () => {
-    void handleSubmit((values) => {
-      forgotPassword.mutate(values, { onSuccess: () => setSent(true) });
-    })();
-  };
+  const onSubmit = handleSubmit((values) => {
+    forgotPassword.mutate(values, { onSuccess: () => setSent(true) });
+  });
 
   if (sent) {
     return (

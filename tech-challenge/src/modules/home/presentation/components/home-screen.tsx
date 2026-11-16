@@ -5,7 +5,6 @@ import { ScrollView, View } from 'react-native';
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
 import { ScreenContainer } from '@/components/layout/screen-container';
-import { Button } from '@/components/ui/button';
 import { FloatingActionButton } from '@/components/ui/fab';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
@@ -47,7 +46,7 @@ export function HomeScreen() {
 
   if (isPending) {
     return (
-      <ScreenContainer className="justify-center">
+      <ScreenContainer edges={['top']} className="justify-center">
         <Loading />
       </ScreenContainer>
     );
@@ -55,19 +54,20 @@ export function HomeScreen() {
 
   if (isError || !stats) {
     return (
-      <ScreenContainer className="justify-center gap-4">
+      <ScreenContainer edges={['top']} className="justify-center">
         <EmptyState
           icon="alert-circle-outline"
           title="Erro ao carregar"
-          description="Não foi possível carregar seus dados financeiros. Verifique a conexão e tente novamente."
+          description="Não foi possível carregar o dashboard. Tente novamente."
+          actionLabel="Tentar novamente"
+          onAction={() => void refetch()}
         />
-        <Button label="Tentar novamente" variant="secondary" onPress={() => void refetch()} />
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer className="px-0">
+    <ScreenContainer edges={['top']} className="px-0">
       <ScrollView
         contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 48, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}

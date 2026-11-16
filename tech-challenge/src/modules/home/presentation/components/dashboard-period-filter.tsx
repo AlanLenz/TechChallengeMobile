@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { Typography } from '@/components/ui/typography';
 
@@ -11,6 +11,17 @@ type DashboardPeriodFilterProps = {
   value: DashboardPeriod;
   onChange: (period: DashboardPeriod) => void;
 };
+
+const SELECTED_SHADOW_STYLE = Platform.select({
+  web: { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.08)' },
+  default: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+});
 
 export function DashboardPeriodFilter({ value, onChange }: DashboardPeriodFilterProps) {
   return (
@@ -28,9 +39,12 @@ export function DashboardPeriodFilter({ value, onChange }: DashboardPeriodFilter
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               onPress={() => onChange(option.value)}
-              style={{ flex: option.value === 'all-time' ? 1.35 : option.value === 'last-30-days' ? 0.8 : 1 }}
+              style={[
+                { flex: option.value === 'all-time' ? 1.35 : option.value === 'last-30-days' ? 0.8 : 1 },
+                isSelected ? SELECTED_SHADOW_STYLE : undefined,
+              ]}
               className={`min-h-10 items-center justify-center rounded-lg px-1 ${
-                isSelected ? 'bg-white shadow-sm dark:bg-neutral-700' : ''
+                isSelected ? 'bg-white dark:bg-neutral-700' : ''
               }`}
             >
               <Typography

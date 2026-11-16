@@ -18,13 +18,14 @@ const VARIANT_TEXT: Record<ButtonVariant, string> = {
   danger: 'text-white',
 };
 
-type ButtonProps = PressableProps & {
+type ButtonProps = Omit<PressableProps, 'onPress'> & {
   label: string;
   variant?: ButtonVariant;
   loading?: boolean;
+  onPress?: PressableProps['onPress'] | (() => unknown);
 };
 
-export function Button({ label, variant = 'primary', loading, disabled, className, ...rest }: ButtonProps) {
+export function Button({ label, variant = 'primary', loading, disabled, className, onPress, ...rest }: ButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
@@ -32,6 +33,7 @@ export function Button({ label, variant = 'primary', loading, disabled, classNam
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
       disabled={isDisabled}
+      onPress={onPress as PressableProps['onPress']}
       className={cx(
         'flex-row items-center justify-center rounded-xl px-4 py-3',
         VARIANT_CONTAINER[variant],

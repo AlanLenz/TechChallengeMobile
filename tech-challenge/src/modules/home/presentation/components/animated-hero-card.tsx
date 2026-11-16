@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Animated, Platform } from 'react-native';
+import { Animated } from 'react-native';
 
 import { HeroCard } from './hero-card';
 
@@ -21,12 +21,12 @@ export function AnimatedHeroCard({
       Animated.timing(opacity, {
         toValue: 1,
         duration: 500,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
         duration: 500,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: true,
       }),
     ]).start();
   }, [opacity, translateY]);
@@ -45,3 +45,4 @@ export function AnimatedHeroCard({
     </Animated.View>
   );
 }
+

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTransactionsContext } from '../../context';
+import { useTransactionsContext } from '../context/transactions-context';
 import type { TransactionReceipt } from '../../domain/entities/transaction.entity';
 import type { TransactionFormValues } from '../../domain/entities/transaction.validation';
 
@@ -41,5 +41,6 @@ export function useUpdateTransaction() {
     error,
   };
 }
+
 
 

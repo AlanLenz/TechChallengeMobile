@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ export function TransactionForm({
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -58,12 +59,10 @@ export function TransactionForm({
     },
   });
 
-  const receiptFile = useWatch({ control, name: 'receiptFile' });
-  const receipt = useWatch({ control, name: 'receipt' });
+  const receiptFile = watch('receiptFile');
+  const receipt = watch('receipt');
 
-  const submit = () => {
-    void handleSubmit((values) => onSubmit(values))();
-  };
+  const submit = handleSubmit((values) => onSubmit(values));
 
   return (
     <View className="flex flex-1 flex-col justify-between gap-6 pb-8">
@@ -194,3 +193,4 @@ export function TransactionForm({
     </View>
   );
 }
+

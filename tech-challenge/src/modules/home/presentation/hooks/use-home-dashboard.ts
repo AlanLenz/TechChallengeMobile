@@ -8,7 +8,7 @@ import {
   type DashboardPeriod,
 } from '../../domain/services/dashboard-period.service';
 
-export function useHomeDashboard(period: DashboardPeriod) {
+export function useHomeDashboard(period: DashboardPeriod = 'this-month') {
   const {
     transactions,
     balance: totalBalance,
@@ -40,3 +40,5 @@ export function useHomeDashboard(period: DashboardPeriod) {
     refetch: refreshTransactions,
   };
 }
+
+

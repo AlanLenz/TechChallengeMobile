@@ -40,12 +40,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused, color }) => (
-            <BottomTabItem
-              focusedIcon="home"
-              unfocusedIcon="home-outline"
-              focused={focused}
-              color={color ?? undefined}
-            />
+            <BottomTabItem focusedIcon="home" unfocusedIcon="home-outline" focused={focused} color={color} />
           ),
         }}
       />
@@ -63,7 +58,7 @@ export default function TabsLayout() {
               focusedIcon="swap-horizontal"
               unfocusedIcon="swap-horizontal-outline"
               focused={focused}
-              color={color ?? undefined}
+              color={color}
             />
           ),
         }}
@@ -85,7 +80,7 @@ export default function TabsLayout() {
               focusedIcon="person"
               unfocusedIcon="person-outline"
               focused={focused}
-              color={color ?? undefined}
+              color={color}
             />
           ),
         }}

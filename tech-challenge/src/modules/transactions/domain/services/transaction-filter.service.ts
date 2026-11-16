@@ -11,19 +11,21 @@ export function filterTransactions(transactions: Transaction[], filters: Transac
   const start = filters.startDate ? startOfDay(new Date(filters.startDate)) : undefined;
   const end = filters.endDate ? endOfDay(new Date(filters.endDate)) : undefined;
 
-  return transactions.filter((transaction) => {
-    if (description && !transaction.description.toLowerCase().includes(description)) return false;
+  return transactions
+    .filter((transaction) => {
+      if (description && !transaction.description.toLowerCase().includes(description)) return false;
 
-    const transactionDate = new Date(transaction.date);
-    if (start && transactionDate < start) return false;
-    if (end && transactionDate > end) return false;
+      const transactionDate = new Date(transaction.date);
+      if (start && transactionDate < start) return false;
+      if (end && transactionDate > end) return false;
 
-    if (filters.type !== 'all' && isDepositType(transaction.type) !== isDepositType(filters.type)) return false;
-    if (filters.categoryId !== 'all' && transaction.categories_id !== filters.categoryId) return false;
+      if (filters.type !== 'all' && isDepositType(transaction.type) !== isDepositType(filters.type)) return false;
+      if (filters.categoryId !== 'all' && transaction.categories_id !== filters.categoryId) return false;
 
-    if (filters.attachment === 'with' && !transaction.receipt) return false;
-    if (filters.attachment === 'without' && transaction.receipt) return false;
+      if (filters.attachment === 'with' && !transaction.receipt) return false;
+      if (filters.attachment === 'without' && transaction.receipt) return false;
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
 }

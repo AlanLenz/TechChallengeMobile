@@ -6,7 +6,8 @@ import type { IProfileRepository } from '../../domain/repositories/profile.repos
 
 async function updateAvatar(userId: string, blob: Blob): Promise<string> {
   const path = getAvatarStoragePath(userId);
-  await uploadFile(path, blob);
+  const contentType = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+  await uploadFile(path, blob, { contentType });
   const url = await getFileUrl(path);
   await updateCurrentUserProfile({ photoURL: url });
   return url;

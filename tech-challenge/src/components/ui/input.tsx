@@ -4,14 +4,12 @@ import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-nat
 
 import { cx } from '@/utils/cx';
 
-type InputRef = ComponentRef<typeof TextInput>;
-
 type InputProps = TextInputProps & {
   label?: string;
   error?: string;
 };
 
-export const Input = forwardRef<InputRef, InputProps>(function Input(
+export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(function Input(
   { label, error, className, secureTextEntry, ...rest },
   ref
 ) {

@@ -24,11 +24,9 @@ export function RegisterForm() {
     defaultValues: AUTH_FORM_DEFAULTS.register,
   });
 
-  const onSubmit = () => {
-    void handleSubmit(({ name, email, password }) => {
-      register.mutate({ name, email, password });
-    })();
-  };
+  const onSubmit = handleSubmit(({ name, email, password }) => {
+    register.mutate({ name, email, password });
+  });
 
   return (
     <View className="gap-4">
@@ -96,7 +94,11 @@ export function RegisterForm() {
         </Typography>
       ) : null}
       <Button label="Criar conta" onPress={onSubmit} loading={register.isPending} />
-      <Button label="Já tenho conta" variant="ghost" onPress={() => router.push(ROUTES.AUTH.LOGIN)} />
+      <Button
+        label="Já tenho conta"
+        variant="ghost"
+        onPress={() => (router.canGoBack() ? router.back() : router.replace(ROUTES.AUTH.LOGIN))}
+      />
     </View>
   );
 }

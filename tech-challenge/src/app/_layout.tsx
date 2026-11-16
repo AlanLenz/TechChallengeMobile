@@ -14,6 +14,7 @@ import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
 import { ConnectivityProvider } from '@/contexts/connectivity-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { ROUTES } from '@/constants/routes';
 import { BiometricLockScreen } from '@/modules/auth';
 import { TransactionsProvider } from '@/modules/transactions';
 import { queryClient } from '@/services/query-client';
@@ -51,10 +52,10 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={status === 'unauthenticated'}>
+      <Stack.Protected guard={status === 'unauthenticated'} redirectTo={ROUTES.TABS.HOME}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
-      <Stack.Protected guard={status === 'authenticated'}>
+      <Stack.Protected guard={status === 'authenticated'} redirectTo={ROUTES.AUTH.LOGIN}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(modals)" options={{ presentation: 'modal' }} />
       </Stack.Protected>

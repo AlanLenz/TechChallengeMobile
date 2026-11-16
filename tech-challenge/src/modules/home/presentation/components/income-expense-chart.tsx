@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
+import { useAppContext } from '@/contexts/app-context';
 
 type IncomeExpenseChartProps = {
   totalIncome: number;
@@ -10,6 +11,7 @@ type IncomeExpenseChartProps = {
 };
 
 export function IncomeExpenseChart({ totalIncome, totalExpenses }: IncomeExpenseChartProps) {
+  const { areValuesVisible } = useAppContext();
   const hasData = totalIncome > 0 || totalExpenses > 0;
 
   const barData = [
@@ -42,6 +44,7 @@ export function IncomeExpenseChart({ totalIncome, totalExpenses }: IncomeExpense
             spacing={40}
             roundedTop
             hideRules
+            hideYAxisText={!areValuesVisible}
             xAxisThickness={1}
             yAxisThickness={0}
             yAxisTextStyle={{ color: '#454952', fontSize: 11 }}

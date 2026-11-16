@@ -24,9 +24,7 @@ export function LoginForm() {
     defaultValues: AUTH_FORM_DEFAULTS.login,
   });
 
-  const onSubmit = () => {
-    void handleSubmit((values) => login.mutate(values))();
-  };
+  const onSubmit = handleSubmit((values) => login.mutate(values));
 
   return (
     <View className="gap-4">

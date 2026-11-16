@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
 import { Header } from '@/components/layout/header';
 import { ScreenContainer } from '@/components/layout/screen-container';
@@ -19,23 +19,30 @@ export function NewTransactionScreen() {
 
   return (
     <ScreenContainer edges={['top']} className="gap-6 px-0">
-      <View className="py-3 bg-primary-500">
-        <Header title="Nova transação" onBack={() => router.back()} />
-      </View>
-      <View className="flex-1 px-screen-x">
-        <TransactionForm
-          submitLabel="Adicionar transação"
-          isSubmitting={createTransaction.isPending}
-          submitError={
-            createTransaction.isError
-              ? createTransaction.error instanceof Error
-                ? createTransaction.error.message
-                : 'Não foi possível salvar a transação.'
-              : undefined
-          }
-          onSubmit={handleSubmit}
-        />
-      </View>
+      <Header title="Nova transação" onBack={() => router.back()} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <TransactionForm
+            submitLabel="Adicionar transação"
+            isSubmitting={createTransaction.isPending}
+            submitError={
+              createTransaction.isError
+                ? createTransaction.error instanceof Error
+                  ? createTransaction.error.message
+                  : 'Não foi possível salvar a transação.'
+                : undefined
+            }
+            onSubmit={handleSubmit}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

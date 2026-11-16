@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Pressable, ScrollView, Switch, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ export function ProfileScreen() {
     photoUrl,
     isEmailVerified,
     sendVerificationEmail,
+    refreshUser,
     isBiometricSupported,
     biometricLabel,
     isBiometricEnabled,
@@ -63,129 +64,144 @@ export function ProfileScreen() {
 
   return (
     <TabScreenLayout title="Perfil">
-      <View className="items-center gap-3 py-6">
-        <Avatar
-          name={name || email || 'Usuário'}
-          photoUrl={photoUrl}
-          size={80}
-        />
-        <Button
-          label="Alterar foto"
-          variant="secondary"
-          onPress={() => router.push(ROUTES.MODALS.EDIT_AVATAR)}
-        />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <View className="items-center gap-3 py-6">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Alterar foto de perfil"
+            onPress={() => router.push(ROUTES.MODALS.EDIT_AVATAR)}
+            className="relative"
+          >
+            <Avatar
+              name={name || email || 'Usuário'}
+              photoUrl={photoUrl}
+              size={80}
+            />
+            <View className="absolute bottom-0 right-0 h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-primary-500">
+              <Ionicons name="camera-outline" size={14} color="#FFFFFF" />
+            </View>
+          </Pressable>
 
-        <View className="items-center gap-1">
-          <Typography variant="subtitle">
-            {name || 'Sem nome cadastrado'}
-          </Typography>
+          <View className="items-center gap-1">
+            <Typography variant="subtitle">
+              {name || 'Sem nome cadastrado'}
+            </Typography>
 
-          {email ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={showFullEmail ? 'Ocultar e-mail completo' : 'Mostrar e-mail completo'}
-              onPress={() => setShowFullEmail((v) => !v)}
-              hitSlop={8}
-              className="flex-row items-center gap-1.5"
-            >
-              <Typography variant="small">
-                {showFullEmail ? email : maskEmailAddress(email)}
-              </Typography>
-              <Ionicons
-                name={showFullEmail ? 'eye-off-outline' : 'eye-outline'}
-                size={15}
-                color={colors.neutral[600]}
+            {email ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={showFullEmail ? 'Ocultar e-mail completo' : 'Mostrar e-mail completo'}
+                onPress={() => setShowFullEmail((v) => !v)}
+                hitSlop={8}
+                className="flex-row items-center gap-1.5"
+              >
+                <Typography variant="small">
+                  {showFullEmail ? email : maskEmailAddress(email)}
+                </Typography>
+                <Ionicons
+                  name={showFullEmail ? 'eye-off-outline' : 'eye-outline'}
+                  size={15}
+                  color={colors.neutral[600]}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+
+          <Badge
+            label={isEmailVerified ? 'E-mail verificado' : 'E-mail não verificado'}
+            tone={isEmailVerified ? 'success' : 'warning'}
+          />
+
+          {!isEmailVerified ? (
+            <View className="items-center gap-2 mt-1">
+              <Button
+                label={isSending ? 'Enviando...' : 'Reenviar confirmação de e-mail'}
+                variant="secondary"
+                loading={isSending}
+                onPress={handleSendVerification}
               />
-            </Pressable>
+              <Button
+                label="Já confirmei meu e-mail"
+                variant="ghost"
+                onPress={() => void refreshUser()}
+              />
+              {resendStatus ? (
+                <Typography variant="small" className="text-center text-neutral-600 dark:text-neutral-400">
+                  {resendStatus}
+                </Typography>
+              ) : null}
+            </View>
           ) : null}
         </View>
 
-        <Badge
-          label={isEmailVerified ? 'E-mail verificado' : 'E-mail não verificado'}
-          tone={isEmailVerified ? 'success' : 'warning'}
-        />
+        <Divider />
 
-        {!isEmailVerified ? (
-          <View className="items-center gap-2 mt-1">
-            <Button
-              label={isSending ? 'Enviando...' : 'Reenviar confirmação de e-mail'}
-              variant="secondary"
-              loading={isSending}
-              onPress={handleSendVerification}
+        <View className="gap-3 py-6">
+          <Typography variant="subtitle">Segurança</Typography>
+
+          <Card className="flex-row items-center justify-between gap-4">
+            <View className="flex-row items-center gap-3 flex-1">
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-neutral-800">
+                <Ionicons name="finger-print-outline" size={22} color={colors.primary[500]} />
+              </View>
+              <View className="flex-1 gap-0.5">
+                <Typography variant="body" className="font-semibold">
+                  Desbloqueio por {biometricLabel}
+                </Typography>
+                <Typography variant="small" className="text-neutral-600 dark:text-neutral-300">
+                  {isBiometricSupported
+                    ? 'Exigir autenticação biométrica ao abrir ou retomar o aplicativo'
+                    : 'Biometria não disponível ou não cadastrada neste dispositivo'}
+                </Typography>
+              </View>
+            </View>
+
+            <Switch
+              value={isBiometricEnabled}
+              onValueChange={handleToggleBiometrics}
+              disabled={!isBiometricSupported || isTogglingBiometrics}
+              trackColor={{ false: colors.neutral[300], true: colors.primary[500] }}
+              accessibilityLabel={`Ativar ou desativar desbloqueio por ${biometricLabel}`}
             />
-            {resendStatus ? (
-              <Typography variant="small" className="text-center text-neutral-600 dark:text-neutral-400">
-                {resendStatus}
-              </Typography>
-            ) : null}
-          </View>
-        ) : null}
-      </View>
+          </Card>
 
-      <Divider />
-
-      <View className="gap-3 py-6">
-        <Typography variant="subtitle">Segurança</Typography>
-
-        <Card className="flex-row items-center justify-between gap-4">
-          <View className="flex-row items-center gap-3 flex-1">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-neutral-800">
-              <Ionicons name="finger-print-outline" size={22} color={colors.primary[500]} />
+          <Card className="flex-row items-center justify-between gap-4">
+            <View className="flex-row items-center gap-3 flex-1">
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-neutral-800">
+                <Ionicons name="eye-off-outline" size={22} color={colors.primary[500]} />
+              </View>
+              <View className="flex-1 gap-0.5">
+                <Typography variant="body" className="font-semibold">
+                  Ocultar valores financeiros
+                </Typography>
+                <Typography variant="small" className="text-neutral-600 dark:text-neutral-300">
+                  Mascarar saldos, entradas, saídas e valores de transações nas telas
+                </Typography>
+              </View>
             </View>
-            <View className="flex-1 gap-0.5">
-              <Typography variant="body" className="font-semibold">
-                Desbloqueio por {biometricLabel}
-              </Typography>
-              <Typography variant="small" className="text-neutral-600 dark:text-neutral-300">
-                {isBiometricSupported
-                  ? 'Exigir autenticação biométrica ao abrir ou retomar o aplicativo'
-                  : 'Biometria não disponível ou não cadastrada neste dispositivo'}
-              </Typography>
-            </View>
-          </View>
 
-          <Switch
-            value={isBiometricEnabled}
-            onValueChange={handleToggleBiometrics}
-            disabled={!isBiometricSupported || isTogglingBiometrics}
-            trackColor={{ false: colors.neutral[300], true: colors.primary[500] }}
-            accessibilityLabel={`Ativar ou desativar desbloqueio por ${biometricLabel}`}
+            <Switch
+              value={!areValuesVisible}
+              onValueChange={() => toggleValuesVisibility()}
+              trackColor={{ false: colors.neutral[300], true: colors.primary[500] }}
+              accessibilityLabel="Ativar ou desativar ocultação de valores financeiros"
+            />
+          </Card>
+        </View>
+
+        <Divider />
+
+        <View className="pt-6">
+          <Button
+            label="Sair"
+            variant="danger"
+            onPress={signOut}
           />
-        </Card>
-
-        <Card className="flex-row items-center justify-between gap-4">
-          <View className="flex-row items-center gap-3 flex-1">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-neutral-800">
-              <Ionicons name="eye-off-outline" size={22} color={colors.primary[500]} />
-            </View>
-            <View className="flex-1 gap-0.5">
-              <Typography variant="body" className="font-semibold">
-                Ocultar valores financeiros
-              </Typography>
-              <Typography variant="small" className="text-neutral-600 dark:text-neutral-300">
-                Mascarar saldos, entradas, saídas e valores de transações nas telas
-              </Typography>
-            </View>
-          </View>
-
-          <Switch
-            value={!areValuesVisible}
-            onValueChange={() => toggleValuesVisibility()}
-            trackColor={{ false: colors.neutral[300], true: colors.primary[500] }}
-            accessibilityLabel="Ativar ou desativar ocultação de valores financeiros"
-          />
-        </Card>
-      </View>
-
-      <Divider />
-
-      <View className="pt-6">
-        <Button
-          label="Sair"
-          variant="danger"
-          onPress={signOut}
-        />
-      </View>
+        </View>
+      </ScrollView>
     </TabScreenLayout>
   );
 }

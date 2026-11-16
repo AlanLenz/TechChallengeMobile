@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
 import { Typography } from '@/components/ui/typography';
+import { ROUTES } from '@/constants/routes';
 import { useAppContext } from '@/contexts/app-context';
 import { useAuthContext } from '@/contexts/auth-context';
 import { TabScreenLayout } from '@/layouts/tab-screen-layout';
@@ -17,6 +19,7 @@ import { maskEmailAddress } from '@/utils/crypto';
 import { useProfile } from '../hooks/use-profile';
 
 export function ProfileScreen() {
+  const router = useRouter();
   const { signOut } = useAuthContext();
   const { areValuesVisible, toggleValuesVisibility } = useAppContext();
   const {
@@ -65,6 +68,11 @@ export function ProfileScreen() {
           name={name || email || 'Usuário'}
           photoUrl={photoUrl}
           size={80}
+        />
+        <Button
+          label="Alterar foto"
+          variant="secondary"
+          onPress={() => router.push(ROUTES.MODALS.EDIT_AVATAR)}
         />
 
         <View className="items-center gap-1">

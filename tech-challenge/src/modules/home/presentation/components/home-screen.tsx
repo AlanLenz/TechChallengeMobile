@@ -1,10 +1,11 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
 import { ScreenContainer } from '@/components/layout/screen-container';
+import { Button } from '@/components/ui/button';
 import { FloatingActionButton } from '@/components/ui/fab';
 import { ROUTES } from '@/constants/routes';
 import { useAuthContext } from '@/contexts/auth-context';
@@ -14,8 +15,10 @@ import { lazyWithPreload } from '@/utils/lazy-with-preload';
 import { useHomeDashboard } from '../hooks/use-home-dashboard';
 import { AnimatedHeroCard } from './animated-hero-card';
 import { ChartSkeleton } from './chart-skeleton';
+import { DashboardPeriodFilter } from './dashboard-period-filter';
 import { RecentTransactionsList } from './recent-transactions-list';
 import { StatsGrid } from './stats-grid';
+import type { DashboardPeriod } from '../../domain/services/dashboard-period.service';
 
 export const DashboardCharts = lazyWithPreload(() =>
   import('./dashboard-charts').then((m) => ({ default: m.DashboardCharts }))
@@ -32,7 +35,8 @@ void preloadHomeCharts();
 export function HomeScreen() {
   const router = useRouter();
   const { user } = useAuthContext();
-  const { data: stats, isPending, isError } = useHomeDashboard();
+  const [period, setPeriod] = useState<DashboardPeriod>('this-month');
+  const { data: stats, isPending, isError, refetch } = useHomeDashboard(period);
 
   const firstName = (user?.displayName ?? user?.email ?? 'Usuário').split(' ')[0];
 
@@ -51,12 +55,13 @@ export function HomeScreen() {
 
   if (isError || !stats) {
     return (
-      <ScreenContainer className="justify-center">
+      <ScreenContainer className="justify-center gap-4">
         <EmptyState
           icon="alert-circle-outline"
           title="Erro ao carregar"
-          description="Não foi possível carregar o dashboard. Tente novamente."
+          description="Não foi possível carregar seus dados financeiros. Verifique a conexão e tente novamente."
         />
+        <Button label="Tentar novamente" variant="secondary" onPress={() => void refetch()} />
       </ScreenContainer>
     );
   }
@@ -64,13 +69,14 @@ export function HomeScreen() {
   return (
     <ScreenContainer className="px-0">
       <ScrollView
-        contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 32, paddingTop: 16 }}
+        contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 48, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
         <AnimatedHeroCard
           firstName={firstName}
           balance={stats.totalBalance}
         />
+        <DashboardPeriodFilter value={period} onChange={setPeriod} />
         <StatsGrid
           totalIncome={stats.totalIncome}
           totalExpenses={stats.totalExpenses}
@@ -88,13 +94,15 @@ export function HomeScreen() {
 
         <RecentTransactionsList transactions={stats.recentTransactions} />
       </ScrollView>
-      <FloatingActionButton
-        accessibilityLabel="Adicionar transação"
-        onPressIn={() => {
-          void preloadTransactionsModule();
-        }}
-        onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
-      />
+      <View className="items-end px-5 py-3">
+        <FloatingActionButton
+          accessibilityLabel="Adicionar transação"
+          onPressIn={() => {
+            void preloadTransactionsModule();
+          }}
+          onPress={() => router.push(ROUTES.MODALS.NEW_TRANSACTION)}
+        />
+      </View>
     </ScreenContainer>
   );
 }

@@ -1,4 +1,5 @@
 import {
+  connectStorageEmulator,
   deleteObject,
   getDownloadURL,
   getStorage,
@@ -8,13 +9,16 @@ import {
   type UploadMetadata,
 } from 'firebase/storage';
 
-import { getFirebaseApp } from './config';
+import { getFirebaseApp, getFirebaseEmulatorHost, useFirebaseEmulators } from './config';
 
 let storageInstance: FirebaseStorage | undefined;
 
 function getStorageInstance(): FirebaseStorage {
   if (!storageInstance) {
     storageInstance = getStorage(getFirebaseApp());
+    if (useFirebaseEmulators) {
+      connectStorageEmulator(storageInstance, getFirebaseEmulatorHost(), 9199);
+    }
   }
 
   return storageInstance;

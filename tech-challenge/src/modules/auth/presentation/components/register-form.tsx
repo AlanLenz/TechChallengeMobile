@@ -24,9 +24,11 @@ export function RegisterForm() {
     defaultValues: AUTH_FORM_DEFAULTS.register,
   });
 
-  const onSubmit = handleSubmit(({ name, email, password }) => {
-    register.mutate({ name, email, password });
-  });
+  const onSubmit = () => {
+    void handleSubmit(({ name, email, password }) => {
+      register.mutate({ name, email, password });
+    })();
+  };
 
   return (
     <View className="gap-4">

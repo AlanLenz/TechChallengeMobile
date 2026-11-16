@@ -1,4 +1,4 @@
-import { ActivityIndicator, Animated } from 'react-native';
+import { ActivityIndicator, Animated, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { colors } from '@/theme';
 
@@ -11,7 +11,7 @@ export function Loading() {
         Animated.timing(opacity, {
           toValue: 0.5,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(opacity, {
           toValue: 1,
@@ -24,11 +24,10 @@ export function Loading() {
     pulse.start();
 
     return () => pulse.stop();
-  }, []);
+  }, [opacity]);
 
   return (
   <Animated.View className="flex-1 items-center justify-center" style={{ opacity }} > 
   <ActivityIndicator color={colors.primary[500]} /> 
   </Animated.View>);
 }
-

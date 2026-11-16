@@ -14,5 +14,11 @@ type BottomTabItemProps = {
 
 /** Ícone de um item do menu inferior — consumido via `tabBarIcon` em (tabs)/_layout.tsx. */
 export function BottomTabItem({ focusedIcon, unfocusedIcon, focused, color, size = 22 }: BottomTabItemProps) {
-  return <Ionicons name={focused ? focusedIcon : unfocusedIcon} size={size} color={color} />;
+  return (
+    <Ionicons
+      name={focused ? focusedIcon : unfocusedIcon}
+      size={size}
+      color={typeof color === 'string' ? color : undefined}
+    />
+  );
 }

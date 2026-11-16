@@ -24,7 +24,7 @@ export function Loading() {
     pulse.start();
 
     return () => pulse.stop();
-  }, []);
+  }, [opacity]);
 
   return (
   <Animated.View className="flex-1 items-center justify-center" style={{ opacity }} > 

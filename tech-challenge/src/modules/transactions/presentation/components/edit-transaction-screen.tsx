@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
 import { EmptyState } from '@/components/feedback/empty-state';
 import { Loading } from '@/components/feedback/loading';
@@ -33,9 +33,7 @@ export function EditTransactionScreen() {
 
   return (
     <ScreenContainer edges={['top']} className="gap-6 px-0">
-      <View className="py-3 bg-primary-500">
-        <Header title="Editar transação" onBack={() => router.back()} />
-      </View>
+      <Header title="Editar transação" onBack={() => router.back()} />
       {isLoading ? (
         <Loading />
       ) : !transaction ? (
@@ -45,30 +43,39 @@ export function EditTransactionScreen() {
           description="Ela pode ter sido excluída ou o link está incorreto."
         />
       ) : (
-        <View className="flex-1 px-screen-x">
-          <TransactionForm
-            submitLabel="Salvar"
-            isSubmitting={updateTransaction.isPending}
-            submitError={
-              updateTransaction.isError
-                ? updateTransaction.error instanceof Error
-                  ? updateTransaction.error.message
-                  : 'Não foi possível salvar a transação.'
-                : undefined
-            }
-            onSubmit={handleSubmit}
-            onDelete={handleDelete}
-            isDeleting={deleteTransaction.isPending}
-            initialValues={{
-              type: isDepositType(transaction.type) ? 'Deposit' : 'Transfer',
-              description: transaction.description,
-              amount: maskCurrency(transaction.amount),
-              date: transaction.date,
-              categoriesId: transaction.categories_id,
-              receipt: transaction.receipt,
-            }}
-          />
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <TransactionForm
+              submitLabel="Salvar"
+              isSubmitting={updateTransaction.isPending}
+              submitError={
+                updateTransaction.isError
+                  ? updateTransaction.error instanceof Error
+                    ? updateTransaction.error.message
+                    : 'Não foi possível salvar a transação.'
+                  : undefined
+              }
+              onSubmit={handleSubmit}
+              onDelete={handleDelete}
+              isDeleting={deleteTransaction.isPending}
+              initialValues={{
+                type: isDepositType(transaction.type) ? 'Deposit' : 'Transfer',
+                description: transaction.description,
+                amount: maskCurrency(transaction.amount),
+                date: transaction.date,
+                categoriesId: transaction.categories_id,
+                receipt: transaction.receipt,
+              }}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </ScreenContainer>
   );

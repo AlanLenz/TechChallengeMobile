@@ -2,11 +2,13 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
 
 import { useAuthContext } from '@/contexts/auth-context';
+import { preloadImages } from '@/services/preload.service';
 
 import {
   createTransactionWithReceipt,
@@ -97,6 +99,13 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [resubscribe]);
 
   const metrics = useMemo(() => calculateTransactionMetrics(transactions), [transactions]);
+
+  useEffect(() => {
+    const urls = metrics.recentTransactions.map((t) =>
+      t.receipt?.contentType.startsWith('image/') ? t.receipt.url : undefined
+    );
+    void preloadImages(urls);
+  }, [metrics.recentTransactions]);
 
   const value = useMemo<TransactionsContextValue>(
     () => ({

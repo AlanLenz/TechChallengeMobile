@@ -20,7 +20,7 @@ import { TransactionListItem } from './transaction-list-item';
 
 export function TransactionsScreen() {
   const router = useRouter();
-  const { data: transactions, isLoading } = useTransactions();
+  const { data: transactions, isLoading, isError, refetch } = useTransactions();
   const { draft, setField, applied, apply, clear, page, setPage, dateError } = useTransactionFilters();
 
   const filtered = useMemo(() => filterTransactions(transactions ?? [], applied), [transactions, applied]);
@@ -48,6 +48,14 @@ export function TransactionsScreen() {
       }>
       {isLoading ? (
         <Loading />
+      ) : isError ? (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Erro ao carregar transações"
+          description="Não foi possível carregar suas transações."
+          actionLabel="Tentar novamente"
+          onAction={() => void refetch()}
+        />
       ) : (
         <FlatList
           data={paginated}
@@ -71,7 +79,7 @@ export function TransactionsScreen() {
                 onPrev={() => setPage((current) => Math.max(1, current - 1))}
                 onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
               />
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <EmptyState

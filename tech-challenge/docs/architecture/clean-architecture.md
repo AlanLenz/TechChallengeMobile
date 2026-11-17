@@ -1,8 +1,7 @@
 # Clean Architecture — ByteBank Mobile
 
 Complementa `docs/architecture.md` (visão geral, navegação, stack). Onde os dois divergirem sobre
-a estrutura interna de `src/modules/*`, **este documento vale**: a seção 7 do arquivo antigo
-(`components/`, `hooks/`, `services/` dentro do module) descreve o layout anterior à adoção das camadas.
+a estrutura interna de `src/modules/*`, **este documento vale**.
 
 ## Visão geral
 
@@ -99,4 +98,4 @@ endpoints, coleções e caminhos de Storage (inalterados).
 ## Limitações conhecidas
 
 - `AuthContext` (`src/contexts`) ainda usa `@/firebase/auth` diretamente e expõe o tipo `User` do Firebase; é gestão de sessão transversal e trocá-lo exigiria alterar todos os consumidores de `user`.
-- Não há framework de testes no projeto; a validação é por tsc, lint e verificação de ciclos.
+- Não há framework de testes de componentes; a validação é por tsc, lint, verificação de ciclos e os testes em `tests/` (`npm run test:dashboard`, `npm run test:emulators`).
